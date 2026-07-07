@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Station {
+  id            String   @id @default(cuid())
+  name          String
+  latitude      Float
+  longitude     Float
+  maxCapacityKw Float
+  numChargers   Int
+  chargerType   String
+  operatorId    String
+  slots         Slot[]
+  bookings      Booking[]
+  forecasts     DemandForecast[]
+  pricingRule   PricingRule?
+}
+
+model Slot {
+  id          String   @id @default(cuid())
+  stationId   String
+  station     Station  @relation(fields: [stationId], references: [id])
+  startTime   DateTime
+  endTime     DateTime
+  capacityKw  Float
+  bookedKw    Float    @default(0)
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+model Booking {
+  id           String   @id @default(cuid())
+  userId       String
+  stationId    String
+  station      Station  @relation(fields: [stationId], references: [id])
+  slotStart    DateTime
+  slotEnd      DateTime
+  requestedKw  Float
+  status       BookingStatus @default(CONFIRMED)
+  priceCharged Float
+  createdAt    DateTime @default(now())
+}
+
+enum Role {
+  DRIVER
+  OPERATOR
+}
+
+model User {
+  id           String @id @default(cuid())
+  name         String
+  email        String @unique
+  role         Role
+  passwordHash String
+}
+
+model DemandForecast {
+  id                String   @id @default(cuid())
+  stationId         String
+  station           Station  @relation(fields: [stationId], references: [id])
+  forecastTime      DateTime
+  predictedKw       Float
+  predictedSessions Int
+  modelVersion      String
+  generatedAt       DateTime @default(now())
+}
+
+model PricingRule {
+  id               String  @id @default(cuid())
+  stationId        String  @unique
+  station          Station @relation(fields: [stationId], references: [id])
+  basePrice        Float
+  demandMultiplier Float
+  updatedAt        DateTime @updatedAt
+}

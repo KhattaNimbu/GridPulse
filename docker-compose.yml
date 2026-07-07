@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the root .env file}
+      POSTGRES_DB: ${POSTGRES_DB:-ev_management}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user} -d ${POSTGRES_DB:-ev_management}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: ./ev-charging-nextjs
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in the root .env file}
+      FORECAST_SERVICE_URL: ${FORECAST_SERVICE_URL:-http://forecasting-service:8001}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?Set NEXTAUTH_SECRET in the root .env file}
+      FORECAST_SERVICE_API_KEY: ${FORECAST_SERVICE_API_KEY:?Set FORECAST_SERVICE_API_KEY in the root .env file}
+      DEMO_DRIVER_EMAIL: ${DEMO_DRIVER_EMAIL:?Set DEMO_DRIVER_EMAIL in the root .env file}
+      DEMO_DRIVER_PASSWORD: ${DEMO_DRIVER_PASSWORD:?Set DEMO_DRIVER_PASSWORD in the root .env file}
+      DEMO_OPERATOR_EMAIL: ${DEMO_OPERATOR_EMAIL:?Set DEMO_OPERATOR_EMAIL in the root .env file}
+      DEMO_OPERATOR_PASSWORD: ${DEMO_OPERATOR_PASSWORD:?Set DEMO_OPERATOR_PASSWORD in the root .env file}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+      ALERT_WEBHOOK: ${ALERT_WEBHOOK:-}
+    depends_on:
+      db:
+        condition: service_healthy
+      forecasting-service:
+        condition: service_started
+    command: sh -c "npx prisma migrate deploy && npm run db:seed && npm run dev"
+
+  forecasting-service:
+    build:
+      context: ./forecasting-service
+    ports:
+      - "8001:8001"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in the root .env file}
+      FORECAST_SERVICE_API_KEY: ${FORECAST_SERVICE_API_KEY:?Set FORECAST_SERVICE_API_KEY in the root .env file}
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
