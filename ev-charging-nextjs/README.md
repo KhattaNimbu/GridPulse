@@ -46,19 +46,20 @@ flowchart LR
 
 ```text
 EV Management/
-├─ docker-compose.yml
-├─ ev-charging-nextjs/
-│  ├─ app/
-│  ├─ components/
-│  ├─ hooks/
-│  ├─ lib/
-│  ├─ prisma/
-│  └─ scripts/
-└─ forecasting-service/
-   ├─ app/
-   ├─ data/processed/
-   ├─ models/
-   └─ scripts/
+|-- docker-compose.yml
+|-- .env.example
+|-- ev-charging-nextjs/
+|   |-- app/
+|   |-- components/
+|   |-- hooks/
+|   |-- lib/
+|   |-- prisma/
+|   `-- scripts/
+`-- forecasting-service/
+    |-- app/
+    |-- data/processed/
+    |-- models/
+    `-- scripts/
 ```
 
 ## Demo Credentials
@@ -70,9 +71,30 @@ Set your own demo credentials in environment variables before seeding:
 - `DEMO_DRIVER_EMAIL`
 - `DEMO_DRIVER_PASSWORD`
 
-## Local Run With Docker
+This repo does not ship with usable hardcoded credentials. Seeding fails fast unless those values are provided.
 
-### One-command startup
+## Run With Docker
+
+### 1. Create the root `.env`
+
+From the workspace root, create a local env file from the root example:
+
+```bash
+cp .env.example .env
+```
+
+Then replace every placeholder. At minimum, set:
+
+- `POSTGRES_PASSWORD`
+- `DATABASE_URL`
+- `NEXTAUTH_SECRET`
+- `FORECAST_SERVICE_API_KEY`
+- `DEMO_DRIVER_EMAIL`
+- `DEMO_DRIVER_PASSWORD`
+- `DEMO_OPERATOR_EMAIL`
+- `DEMO_OPERATOR_PASSWORD`
+
+### 2. Start the stack
 
 From the workspace root:
 
@@ -94,15 +116,17 @@ The web container automatically:
 
 The forecasting service lazily generates synthetic demand history if it is missing, then trains or reuses Prophet models on demand.
 
-## Local Run Without Docker
+If Docker exits immediately, check the root `.env` first. The compose file intentionally refuses to start with missing required secrets.
+
+## Run Locally Without Docker
 
 ### 1. Start Postgres
 
 Use your own local Postgres instance and create a database named `ev_management`.
 
-### 2. Configure env
+### 2. Configure the Next.js app
 
-Create `ev-charging-nextjs/.env` from `.env.example` and replace every placeholder with your own values:
+Create `ev-charging-nextjs/.env` from `ev-charging-nextjs/.env.example` and replace every placeholder:
 
 ```env
 DATABASE_URL=postgresql://user:change-this-postgres-password@localhost:5432/ev_management
@@ -118,16 +142,31 @@ ADMIN_EMAILS=operator@example.local
 ALERT_WEBHOOK=
 ```
 
-### 3. Start the Next.js app
+### 3. Configure the forecasting service
+
+Create `forecasting-service/.env` from `forecasting-service/.env.example`:
+
+```env
+DATABASE_URL=postgresql://user:change-this-postgres-password@localhost:5432/ev_management
+API_HOST=localhost
+API_PORT=8001
+DEBUG=false
+FORECAST_SERVICE_API_KEY=replace-with-the-same-internal-api-key-used-by-the-nextjs-app
+MODEL_PATH=./models
+DATA_PATH=./data/processed
+```
+
+### 4. Start the Next.js app
 
 ```bash
 cd ev-charging-nextjs
+npm install
 npx prisma migrate dev
 npm run db:seed
 npm run dev
 ```
 
-### 4. Start the forecasting service
+### 5. Start the forecasting service
 
 ```bash
 cd forecasting-service
@@ -135,14 +174,21 @@ python -m pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port 8001
 ```
 
+### 6. Sign in
+
+Use the values you set in:
+
+- `DEMO_OPERATOR_EMAIL` / `DEMO_OPERATOR_PASSWORD`
+- `DEMO_DRIVER_EMAIL` / `DEMO_DRIVER_PASSWORD`
+
 ## Verification Checklist
 
 ### Auth
 
 1. Open `http://localhost:3000/sign-in`
-2. Sign in with the operator account
+2. Sign in with the operator account from your env file
 3. Visit `/operator` and confirm access is allowed
-4. Sign in with the driver account and confirm `/operator` redirects to `/unauthorized`
+4. Sign in with the driver account from your env file and confirm `/operator` redirects to `/unauthorized`
 
 ### Booking and Capacity
 
@@ -193,7 +239,7 @@ The booking path performs its capacity check and slot updates inside a Prisma se
 
 ### Polling instead of pub/sub or WebSockets
 
-V1 uses SWR polling every 5–10 seconds. This keeps the architecture simpler to explain and deploy while still being strong enough for a live demo. The trade-off is slightly stale dashboards versus lower infrastructure complexity.
+V1 uses SWR polling every 5-10 seconds. This keeps the architecture simpler to explain and deploy while still being strong enough for a live demo. The trade-off is slightly stale dashboards versus lower infrastructure complexity.
 
 ### Prophet-only forecasting
 
@@ -216,6 +262,13 @@ If historical demand data is not present, the forecasting service generates real
 - `GET /api/load-curve?stationId=...`
 - `GET /api/auth/[...nextauth]`
 - `POST /api/auth/[...nextauth]`
+
+## Security Notes
+
+- `.env` files are ignored and should never be committed.
+- Runtime `logs/` output is ignored and should stay local.
+- Docker and seed setup require explicit secret values instead of falling back to weak usable defaults.
+- `FORECAST_SERVICE_API_KEY` should match in both app environments when running outside Docker.
 
 ## Screenshots / GIFs
 
