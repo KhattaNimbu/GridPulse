@@ -270,15 +270,6 @@ If historical demand data is not present, the forecasting service generates real
 - Docker and seed setup require explicit secret values instead of falling back to weak usable defaults.
 - `FORECAST_SERVICE_API_KEY` should match in both app environments when running outside Docker.
 
-## Screenshots / GIFs
-
-Add final demo assets here before publishing:
-
-- `docs/screenshots/home.png`
-- `docs/screenshots/driver-dashboard.png`
-- `docs/screenshots/operator-dashboard.png`
-- `docs/screenshots/load-curve-alert.png`
-- `docs/demo.gif`
 
 ## Current V1 Scope
 
