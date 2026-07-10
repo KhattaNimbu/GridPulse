@@ -171,8 +171,10 @@ npm run dev
 ```bash
 cd forecasting-service
 python -m pip install -r requirements.txt
-uvicorn app.main:app --host 0.0.0.0 --port 8001
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8001
 ```
+
+If you see an import error about a missing or conflicting `app.py` on Windows, prefer the module form above because it avoids Python resolving an unrelated top-level `app` module from the interpreter install path.
 
 ### 6. Sign in
 
