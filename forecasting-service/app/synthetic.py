@@ -51,7 +51,7 @@ def generate_synthetic_history() -> pd.DataFrame:
                 {
                     "station_id": station["id"],
                     "station_name": station["name"],
-                    "ds": current,
+                    "ds": current.replace(tzinfo=None),
                     "y": round(kw, 3),
                     "sessions": sessions,
                 }

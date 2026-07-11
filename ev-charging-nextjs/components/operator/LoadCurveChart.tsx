@@ -3,8 +3,8 @@
 import {
   CartesianGrid,
   Legend,
-  Line,
-  LineChart,
+  Area,
+  AreaChart,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -19,27 +19,35 @@ type Props = {
 
 export default function LoadCurveChart({ data }: Props) {
   return (
-    <div className="rounded-lg border bg-white p-4 shadow-sm">
-      <div className="mb-4 flex items-center justify-between gap-4">
+    <div className="gp-card p-6">
+      <div className="mb-6 flex items-center justify-between gap-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Today&apos;s Load Curve</h3>
-          <p className="text-sm text-gray-600">
+          <h3 className="text-xl font-bold text-slate-100">Today&apos;s Load Curve</h3>
+          <p className="text-sm text-slate-400 mt-1">
             Watching booked kW against station capacity in 30-minute slices.
           </p>
         </div>
-        <div className="text-right text-sm text-gray-600">
-          <div>Peak booked: {data.peakBookedKw.toFixed(1)} kW</div>
-          <div>Capacity: {data.station.maxCapacityKw.toFixed(1)} kW</div>
+        <div className="text-right text-sm text-slate-400">
+          <div>Peak booked: <span className="font-semibold text-slate-200">{data.peakBookedKw.toFixed(1)} kW</span></div>
+          <div>Capacity: <span className="font-semibold text-slate-200">{data.station.maxCapacityKw.toFixed(1)} kW</span></div>
         </div>
       </div>
 
       <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data.points} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis dataKey="label" minTickGap={18} stroke="#6b7280" />
-            <YAxis stroke="#6b7280" width={56} />
+          <AreaChart data={data.points} margin={{ top: 16, right: 8, left: 0, bottom: 8 }}>
+            <defs>
+              <linearGradient id="colorBookedKw" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#22d3ee" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+            <XAxis dataKey="label" minTickGap={18} stroke="#64748b" tick={{ fill: '#64748b' }} axisLine={false} tickLine={false} />
+            <YAxis stroke="#64748b" width={56} tick={{ fill: '#64748b' }} axisLine={false} tickLine={false} />
             <Tooltip
+              contentStyle={{ backgroundColor: '#0a1628', borderColor: 'rgba(255,255,255,0.1)', color: '#e2e8f0', borderRadius: '8px' }}
+              itemStyle={{ color: '#22d3ee' }}
               formatter={(value, name) => {
                 const numericValue = typeof value === 'number' ? value : Number(value ?? 0);
                 return [
@@ -49,32 +57,24 @@ export default function LoadCurveChart({ data }: Props) {
               }}
               labelFormatter={(label) => `Slot ${label}`}
             />
-            <Legend />
+            <Legend wrapperStyle={{ paddingTop: '20px' }} />
             <ReferenceLine
               y={data.station.maxCapacityKw}
-              stroke="#f97316"
+              stroke="#4ade80"
               strokeDasharray="4 4"
-              label="Max Capacity"
+              label={{ position: 'top', value: 'Max Capacity', fill: '#4ade80', fontSize: 12 }}
             />
-            <Line
+            <Area
               type="monotone"
               dataKey="bookedKw"
               name="Booked Load"
-              stroke="#2563eb"
-              strokeWidth={3}
-              dot={false}
-              isAnimationActive={false}
-            />
-            <Line
-              type="monotone"
-              dataKey="capacityKw"
-              name="Capacity"
-              stroke="#10b981"
+              stroke="#22d3ee"
+              fillOpacity={1}
+              fill="url(#colorBookedKw)"
               strokeWidth={2}
-              dot={false}
               isAnimationActive={false}
             />
-          </LineChart>
+          </AreaChart>
         </ResponsiveContainer>
       </div>
     </div>

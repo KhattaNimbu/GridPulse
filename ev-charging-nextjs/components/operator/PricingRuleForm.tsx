@@ -9,12 +9,11 @@ type PricingRule = {
 
 type Props = {
   stationId: string;
-  stationName: string;
   initialRule: PricingRule | null;
   onSuccess: () => void;
 };
 
-export default function PricingRuleForm({ stationId, stationName, initialRule, onSuccess }: Props) {
+export default function PricingRuleForm({ stationId, initialRule, onSuccess }: Props) {
   const [basePrice, setBasePrice] = useState(initialRule?.basePrice ?? 12);
   const [demandMultiplier, setDemandMultiplier] = useState(initialRule?.demandMultiplier ?? 0.5);
   const [loading, setLoading] = useState(false);
@@ -53,35 +52,35 @@ export default function PricingRuleForm({ stationId, stationName, initialRule, o
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-lg border bg-white p-4 shadow-sm">
-      <h3 className="text-lg font-semibold text-gray-900">{stationName}</h3>
-      <p className="mt-1 text-sm text-gray-600">Adjust off-peak base price and how strongly demand changes pricing.</p>
+    <form onSubmit={handleSubmit} className="mt-4 pt-4 border-t border-white/10">
+      <h3 className="text-lg font-semibold text-slate-200">Pricing Settings</h3>
+      <p className="mt-1 text-sm text-slate-400">Adjust off-peak base price and how strongly demand changes pricing.</p>
 
-      {error && <div className="mt-3 rounded bg-red-100 p-2 text-sm text-red-700">{error}</div>}
-      {message && <div className="mt-3 rounded bg-green-100 p-2 text-sm text-green-700">{message}</div>}
+      {error && <div className="mt-3 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">{error}</div>}
+      {message && <div className="mt-3 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-400">{message}</div>}
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <label className="block text-sm">
-          <span className="mb-1 block font-medium text-gray-700">Base Price</span>
+          <span className="mb-1 block font-medium text-slate-300">Base Price (₹)</span>
           <input
             type="number"
             min="0"
             step="0.01"
             value={basePrice}
             onChange={(event) => setBasePrice(Number(event.target.value))}
-            className="w-full rounded border p-2"
+            className="gp-input"
           />
         </label>
 
         <label className="block text-sm">
-          <span className="mb-1 block font-medium text-gray-700">Demand Multiplier</span>
+          <span className="mb-1 block font-medium text-slate-300">Demand Multiplier</span>
           <input
             type="number"
             min="0"
             step="0.01"
             value={demandMultiplier}
             onChange={(event) => setDemandMultiplier(Number(event.target.value))}
-            className="w-full rounded border p-2"
+            className="gp-input"
           />
         </label>
       </div>
@@ -89,11 +88,10 @@ export default function PricingRuleForm({ stationId, stationName, initialRule, o
       <button
         type="submit"
         disabled={loading}
-        className="mt-4 rounded bg-emerald-600 px-4 py-2 text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+        className="mt-4 gp-btn-secondary w-full sm:w-auto"
       >
         {loading ? 'Saving...' : 'Save Pricing'}
       </button>
     </form>
   );
 }
-

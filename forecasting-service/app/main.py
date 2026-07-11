@@ -27,3 +27,5 @@ def get_station_forecast(station_id: str, request: Request):
         raise HTTPException(status_code=500, detail=str(error)) from error
     except ValueError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=str(error)) from error

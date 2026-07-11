@@ -3,16 +3,30 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { ShieldCheck, Zap } from 'lucide-react';
 
 export default function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') ?? '/';
 
-  const [email, setEmail] = useState(process.env.NEXT_PUBLIC_DEMO_EMAIL ?? 'operator@example.com');
-  const [password, setPassword] = useState(process.env.NEXT_PUBLIC_DEMO_PASSWORD ?? 'operator123');
+  const [mode, setMode] = useState<'DRIVER' | 'OPERATOR'>('DRIVER');
+  const [email, setEmail] = useState(process.env.NEXT_PUBLIC_DEMO_DRIVER_EMAIL ?? 'driver@example.com');
+  const [password, setPassword] = useState(process.env.NEXT_PUBLIC_DEMO_DRIVER_PASSWORD ?? 'driver123');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  function switchMode(nextMode: 'DRIVER' | 'OPERATOR') {
+    setMode(nextMode);
+    if (nextMode === 'DRIVER') {
+      setEmail(process.env.NEXT_PUBLIC_DEMO_DRIVER_EMAIL ?? 'driver@example.com');
+      setPassword(process.env.NEXT_PUBLIC_DEMO_DRIVER_PASSWORD ?? 'driver123');
+      return;
+    }
+
+    setEmail(process.env.NEXT_PUBLIC_DEMO_OPERATOR_EMAIL ?? 'operator@example.com');
+    setPassword(process.env.NEXT_PUBLIC_DEMO_OPERATOR_PASSWORD ?? 'operator123');
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -38,47 +52,85 @@ export default function SignInForm() {
   }
 
   return (
-    <div className="w-full max-w-md rounded-2xl border bg-white p-8 shadow-sm">
-      <h1 className="text-2xl font-bold text-slate-900">Sign In</h1>
-      <p className="mt-2 text-sm text-slate-600">
-        Use a seeded operator or driver account to access the demo.
-      </p>
+    <div className="grid w-full max-w-6xl gap-12 lg:grid-cols-[1fr_0.95fr] lg:items-center">
+      <div className="space-y-8">
+        <div className="gp-badge rounded-full px-4 py-2 text-[0.82rem] text-[var(--color-gp-text-muted)]">
+          <ShieldCheck className="h-3.5 w-3.5 text-[var(--color-gp-cyan)]" /> Secure sign-in
+        </div>
+        <div className="space-y-5">
+          <h1 className="text-6xl font-bold tracking-tight text-white">
+            Welcome back to <span className="gp-gradient-text">GridPulse.</span>
+          </h1>
+          <p className="max-w-xl text-lg leading-8 text-[var(--color-gp-text-muted)]">
+            Book charging slots as a driver or step into the control room as an operator. Sessions are role-protected and encrypted end to end.
+          </p>
+        </div>
+        <ul className="space-y-3 text-[var(--color-gp-text-muted)]">
+          {[
+            'NextAuth credentials with role gating',
+            'Serializable booking guarantees',
+            'SSO-ready architecture for future enterprise plans',
+          ].map((item) => (
+            <li key={item} className="flex items-center gap-3">
+              <span className="h-2 w-2 rounded-full bg-[var(--color-gp-cyan)]" />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-        <label className="block text-sm">
-          <span className="mb-1 block font-medium text-slate-700">Email</span>
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            className="w-full rounded-lg border p-3"
-          />
-        </label>
+      <div className="gp-panel rounded-[2rem] p-6">
+        <div className="rounded-[1.5rem] border border-white/10 bg-[rgba(4,16,29,0.9)] p-6">
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-gp-cyan)] to-[var(--color-gp-green)]">
+              <Zap className="h-4 w-4 fill-[var(--color-gp-bg)] text-[var(--color-gp-bg)]" />
+            </div>
+            <div>
+              <div className="text-2xl font-semibold text-white">Sign in</div>
+              <div className="text-sm text-[var(--color-gp-text-muted)]">Use your GridPulse credentials</div>
+            </div>
+          </div>
 
-        <label className="block text-sm">
-          <span className="mb-1 block font-medium text-slate-700">Password</span>
-          <input
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="w-full rounded-lg border p-3"
-          />
-        </label>
+          <div className="mb-6 grid grid-cols-2 rounded-full border border-white/10 bg-white/[0.03] p-1">
+            <button
+              type="button"
+              onClick={() => switchMode('DRIVER')}
+              className={`rounded-full px-4 py-3 text-sm font-medium transition-colors ${mode === 'DRIVER' ? 'bg-gradient-to-r from-[var(--color-gp-cyan)] to-[var(--color-gp-green)] text-[var(--color-gp-bg)]' : 'text-[var(--color-gp-text-muted)]'}`}
+            >
+              Driver
+            </button>
+            <button
+              type="button"
+              onClick={() => switchMode('OPERATOR')}
+              className={`rounded-full px-4 py-3 text-sm font-medium transition-colors ${mode === 'OPERATOR' ? 'bg-gradient-to-r from-[var(--color-gp-cyan)] to-[var(--color-gp-green)] text-[var(--color-gp-bg)]' : 'text-[var(--color-gp-text-muted)]'}`}
+            >
+              Operator
+            </button>
+          </div>
 
-        {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <label className="block text-sm">
+              <span className="mb-2 block font-medium uppercase tracking-[0.18em] text-[var(--color-gp-text-dim)]">Email</span>
+              <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="gp-input" />
+            </label>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-lg bg-slate-900 px-4 py-3 font-medium text-white hover:bg-slate-800 disabled:opacity-50"
-        >
-          {loading ? 'Signing in...' : 'Sign In'}
-        </button>
-      </form>
+            <label className="block text-sm">
+              <span className="mb-2 block font-medium uppercase tracking-[0.18em] text-[var(--color-gp-text-dim)]">Password</span>
+              <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} className="gp-input" />
+            </label>
 
-      <div className="mt-6 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
-        <div><span className="font-medium text-slate-800">Operator:</span> {process.env.NEXT_PUBLIC_DEMO_OPERATOR_EMAIL ?? 'operator@example.com'} / {process.env.NEXT_PUBLIC_DEMO_OPERATOR_PASSWORD ?? 'operator123'}</div>
-        <div><span className="font-medium text-slate-800">Driver:</span> {process.env.NEXT_PUBLIC_DEMO_DRIVER_EMAIL ?? 'driver@example.com'} / {process.env.NEXT_PUBLIC_DEMO_DRIVER_PASSWORD ?? 'driver123'}</div>
+            {error && <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">{error}</div>}
+
+            <button type="submit" disabled={loading} className="gp-btn-primary flex w-full items-center justify-center gap-2 py-3.5 text-base">
+              {loading ? 'Signing in...' : `Continue as ${mode === 'DRIVER' ? 'driver' : 'operator'}`}
+            </button>
+          </form>
+
+          <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.02] p-4 text-sm text-[var(--color-gp-text-muted)]">
+            <div><span className="font-medium text-white">Operator:</span> {process.env.NEXT_PUBLIC_DEMO_OPERATOR_EMAIL ?? 'operator@example.com'} / {process.env.NEXT_PUBLIC_DEMO_OPERATOR_PASSWORD ?? 'operator123'}</div>
+            <div className="mt-1"><span className="font-medium text-white">Driver:</span> {process.env.NEXT_PUBLIC_DEMO_DRIVER_EMAIL ?? 'driver@example.com'} / {process.env.NEXT_PUBLIC_DEMO_DRIVER_PASSWORD ?? 'driver123'}</div>
+          </div>
+        </div>
       </div>
     </div>
   );

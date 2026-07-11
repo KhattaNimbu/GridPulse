@@ -43,53 +43,55 @@ export default function StationForm({ onSuccess }: { onSuccess: () => void }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 max-w-md p-4 border rounded-lg bg-white shadow">
-      <h2 className="text-xl font-bold mb-4">Add New Station</h2>
+    <form onSubmit={handleSubmit} className="space-y-4 w-full p-6 gp-card">
+      <h2 className="text-xl font-bold mb-4 text-slate-100">Add New Station</h2>
       
-      {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
+      {error && <div className="text-red-400 text-sm mb-4 bg-red-500/10 border border-red-500/20 p-3 rounded-lg">{error}</div>}
 
       <div>
-        <label className="block text-sm font-medium mb-1">Name</label>
-        <input name="name" type="text" required className="w-full border rounded p-2" />
+        <label className="block text-sm font-medium mb-1 text-slate-300">Name</label>
+        <input name="name" type="text" required className="gp-input" placeholder="e.g. Downtown Hub" />
       </div>
 
       <div className="flex gap-4">
         <div className="flex-1">
-          <label className="block text-sm font-medium mb-1">Latitude</label>
-          <input name="latitude" type="number" step="any" required className="w-full border rounded p-2" />
+          <label className="block text-sm font-medium mb-1 text-slate-300">Latitude</label>
+          <input name="latitude" type="number" step="any" required className="gp-input" placeholder="37.7749" />
         </div>
         <div className="flex-1">
-          <label className="block text-sm font-medium mb-1">Longitude</label>
-          <input name="longitude" type="number" step="any" required className="w-full border rounded p-2" />
+          <label className="block text-sm font-medium mb-1 text-slate-300">Longitude</label>
+          <input name="longitude" type="number" step="any" required className="gp-input" placeholder="-122.4194" />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Max Capacity (kW)</label>
-        <input name="maxCapacityKw" type="number" min="1" step="any" required className="w-full border rounded p-2" />
+        <label className="block text-sm font-medium mb-1 text-slate-300">Max Capacity (kW)</label>
+        <input name="maxCapacityKw" type="number" min="1" step="any" required className="gp-input" placeholder="e.g. 500" />
       </div>
 
       <div className="flex gap-4">
         <div className="flex-1">
-          <label className="block text-sm font-medium mb-1">Number of Chargers</label>
-          <input name="numChargers" type="number" min="1" required className="w-full border rounded p-2" />
+          <label className="block text-sm font-medium mb-1 text-slate-300">Number of Chargers</label>
+          <input name="numChargers" type="number" min="1" required className="gp-input" placeholder="4" />
         </div>
         <div className="flex-1">
-          <label className="block text-sm font-medium mb-1">Charger Type</label>
-          <select name="chargerType" required className="w-full border rounded p-2 bg-white">
-            <option value="DC Fast">DC Fast</option>
-            <option value="Level 2">Level 2</option>
+          <label className="block text-sm font-medium mb-1 text-slate-300">Charger Type</label>
+          <select name="chargerType" required className="gp-select">
+            <option value="DC Fast" className="bg-[#0a1628]">DC Fast</option>
+            <option value="Level 2" className="bg-[#0a1628]">Level 2</option>
           </select>
         </div>
       </div>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-blue-600 text-white font-medium py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-      >
-        {loading ? 'Creating...' : 'Create Station'}
-      </button>
+      <div className="pt-2">
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full gp-btn-primary"
+        >
+          {loading ? 'Creating...' : 'Create Station'}
+        </button>
+      </div>
     </form>
   );
 }

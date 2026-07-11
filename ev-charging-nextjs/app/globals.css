@@ -1,26 +1,221 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-gp-bg: #020813;
+  --color-gp-surface: #0a1628;
+  --color-gp-surface-2: #0d1b2f;
+  --color-gp-card: rgba(255, 255, 255, 0.03);
+  --color-gp-card-hover: rgba(255, 255, 255, 0.06);
+  --color-gp-border: rgba(255, 255, 255, 0.08);
+  --color-gp-border-active: rgba(34, 211, 238, 0.4);
+  --color-gp-cyan: #22d3ee;
+  --color-gp-green: #4ade80;
+  --color-gp-text: #e2e8f0;
+  --color-gp-text-muted: #94a3b8;
+  --color-gp-text-dim: #64748b;
   --font-sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+  --font-mono: "JetBrains Mono", "Cascadia Code", "SFMono-Regular", Consolas, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--color-gp-bg);
+  color: var(--color-gp-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-gp-bg);
+}
+
+.gp-card {
+  background: var(--color-gp-card);
+  border: 1px solid var(--color-gp-border);
+  border-radius: 0.75rem;
+  backdrop-filter: blur(12px);
+}
+
+.gp-card:hover {
+  background: var(--color-gp-card-hover);
+}
+
+.gp-card-active {
+  background: var(--color-gp-card);
+  border: 1px solid var(--color-gp-border-active);
+  border-radius: 0.75rem;
+  box-shadow: 0 0 24px rgba(34, 211, 238, 0.06);
+}
+
+.gp-gradient-text {
+  background: linear-gradient(135deg, var(--color-gp-cyan), var(--color-gp-green));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gp-btn-primary {
+  background: linear-gradient(135deg, var(--color-gp-cyan), #28e7cf 48%, #8cf94e 100%);
+  color: #020813;
+  font-weight: 600;
+  padding: 0.625rem 1.5rem;
+  border-radius: 9999px;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.gp-btn-primary:hover {
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.25);
+  transform: translateY(-1px);
+}
+
+.gp-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.gp-btn-secondary {
+  background: transparent;
+  color: var(--color-gp-text);
+  font-weight: 500;
+  padding: 0.625rem 1.5rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-gp-border);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.gp-btn-secondary:hover {
+  border-color: var(--color-gp-cyan);
+  color: var(--color-gp-cyan);
+}
+
+.gp-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--color-gp-border);
+  border-radius: 0.75rem;
+  padding: 0.75rem 0.95rem;
+  color: var(--color-gp-text);
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease;
+}
+
+.gp-input:focus {
+  outline: none;
+  border-color: var(--color-gp-cyan);
+  box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.1);
+}
+
+.gp-input::placeholder {
+  color: var(--color-gp-text-dim);
+}
+
+.gp-select {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-gp-border);
+  border-radius: 0.75rem;
+  padding: 0.75rem 0.95rem;
+  color: var(--color-gp-text);
+  font-size: 0.875rem;
+  appearance: none;
+}
+
+.gp-select:focus {
+  outline: none;
+  border-color: var(--color-gp-cyan);
+}
+
+.gp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid var(--color-gp-border);
+  background: var(--color-gp-card);
+}
+
+.gp-grid-overlay {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.gp-glow {
+  box-shadow: 0 0 30px rgba(34, 211, 238, 0.08),
+              inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+.gp-panel {
+  background:
+    radial-gradient(circle at top left, rgba(34, 211, 238, 0.08), transparent 38%),
+    radial-gradient(circle at bottom right, rgba(74, 222, 128, 0.08), transparent 34%),
+    linear-gradient(180deg, rgba(10, 22, 40, 0.94), rgba(5, 13, 25, 0.96));
+  border: 1px solid var(--color-gp-border);
+  border-radius: 1.75rem;
+  backdrop-filter: blur(12px);
+}
+
+.gp-section-title {
+  font-size: clamp(2.8rem, 6vw, 5.2rem);
+  line-height: 0.98;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.gp-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(90px);
+  pointer-events: none;
+}
+
+.gp-stat-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 1.25rem;
+}
+
+.recharts-cartesian-grid line {
+  stroke: rgba(255, 255, 255, 0.06) !important;
+}
+
+.recharts-text {
+  fill: var(--color-gp-text-muted) !important;
+  font-size: 0.75rem;
+}
+
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: var(--color-gp-surface) !important;
+  border: 1px solid var(--color-gp-border) !important;
+  border-radius: 0.5rem !important;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }

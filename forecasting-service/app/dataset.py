@@ -15,12 +15,18 @@ def load_history(history_path: Path | None = None) -> pd.DataFrame:
         return generate_synthetic_history()
 
     frame = pd.read_csv(path, parse_dates=["ds"])
+    if "ds" in frame.columns:
+        frame["ds"] = pd.to_datetime(frame["ds"]).dt.tz_localize(None)
     frame = frame.sort_values(["station_id", "ds"]).reset_index(drop=True)
     return frame
 
 
 def station_history(frame: pd.DataFrame, station_id: str) -> pd.DataFrame:
     station_frame = frame.loc[frame["station_id"] == station_id].copy()
+    if station_frame.empty:
+        regenerated_frame = generate_synthetic_history()
+        station_frame = regenerated_frame.loc[regenerated_frame["station_id"] == station_id].copy()
+
     if station_frame.empty:
         raise ValueError(f"No history found for station {station_id}")
     return station_frame
