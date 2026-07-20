@@ -10,22 +10,27 @@ export default function SignInForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') ?? '/';
 
+  const demoDriverEmail = process.env.NEXT_PUBLIC_DEMO_DRIVER_EMAIL?.trim();
+  const demoDriverPassword = process.env.NEXT_PUBLIC_DEMO_DRIVER_PASSWORD?.trim();
+  const demoOperatorEmail = process.env.NEXT_PUBLIC_DEMO_OPERATOR_EMAIL?.trim();
+  const demoOperatorPassword = process.env.NEXT_PUBLIC_DEMO_OPERATOR_PASSWORD?.trim();
+
   const [mode, setMode] = useState<'DRIVER' | 'OPERATOR'>('DRIVER');
-  const [email, setEmail] = useState(process.env.NEXT_PUBLIC_DEMO_DRIVER_EMAIL ?? 'driver@example.com');
-  const [password, setPassword] = useState(process.env.NEXT_PUBLIC_DEMO_DRIVER_PASSWORD ?? 'driver123');
+  const [email, setEmail] = useState(demoDriverEmail ?? '');
+  const [password, setPassword] = useState(demoDriverPassword ?? '');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   function switchMode(nextMode: 'DRIVER' | 'OPERATOR') {
     setMode(nextMode);
     if (nextMode === 'DRIVER') {
-      setEmail(process.env.NEXT_PUBLIC_DEMO_DRIVER_EMAIL ?? 'driver@example.com');
-      setPassword(process.env.NEXT_PUBLIC_DEMO_DRIVER_PASSWORD ?? 'driver123');
+      setEmail(demoDriverEmail ?? '');
+      setPassword(demoDriverPassword ?? '');
       return;
     }
 
-    setEmail(process.env.NEXT_PUBLIC_DEMO_OPERATOR_EMAIL ?? 'operator@example.com');
-    setPassword(process.env.NEXT_PUBLIC_DEMO_OPERATOR_PASSWORD ?? 'operator123');
+    setEmail(demoOperatorEmail ?? '');
+    setPassword(demoOperatorPassword ?? '');
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -126,10 +131,16 @@ export default function SignInForm() {
             </button>
           </form>
 
-          <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.02] p-4 text-sm text-[var(--color-gp-text-muted)]">
-            <div><span className="font-medium text-white">Operator:</span> {process.env.NEXT_PUBLIC_DEMO_OPERATOR_EMAIL ?? 'operator@example.com'} / {process.env.NEXT_PUBLIC_DEMO_OPERATOR_PASSWORD ?? 'operator123'}</div>
-            <div className="mt-1"><span className="font-medium text-white">Driver:</span> {process.env.NEXT_PUBLIC_DEMO_DRIVER_EMAIL ?? 'driver@example.com'} / {process.env.NEXT_PUBLIC_DEMO_DRIVER_PASSWORD ?? 'driver123'}</div>
-          </div>
+          {(demoOperatorEmail || demoOperatorPassword || demoDriverEmail || demoDriverPassword) && (
+            <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.02] p-4 text-sm text-[var(--color-gp-text-muted)]">
+              {demoOperatorEmail && demoOperatorPassword && (
+                <div><span className="font-medium text-white">Operator:</span> {demoOperatorEmail} / {demoOperatorPassword}</div>
+              )}
+              {demoDriverEmail && demoDriverPassword && (
+                <div className={demoOperatorEmail && demoOperatorPassword ? 'mt-1' : ''}><span className="font-medium text-white">Driver:</span> {demoDriverEmail} / {demoDriverPassword}</div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
