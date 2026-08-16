@@ -10,6 +10,15 @@ export default function Header() {
   const { data: session, status } = useSession();
 
   const isActive = (path: string) => pathname === path;
+  const userRole = session?.user?.role;
+
+  // Determine which dashboard link to show based on role
+  // If not signed in, show both. If signed in, only show the user's role dashboard.
+  const showDriverLink = !userRole || userRole === 'DRIVER';
+  const showOperatorLink = !userRole || userRole === 'OPERATOR';
+
+  // CTA target based on role
+  const launchTarget = userRole === 'OPERATOR' ? '/operator' : '/driver';
 
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--color-gp-border)] bg-[var(--color-gp-bg)]/88 backdrop-blur-xl">
@@ -24,21 +33,41 @@ export default function Header() {
         </Link>
 
         <nav className="hidden items-center gap-10 md:flex">
-          <Link href="/" className={`text-sm font-medium transition-colors hover:text-white ${isActive('/') ? 'text-white' : 'text-[var(--color-gp-text-muted)]'}`}>
+          <Link
+            href="/"
+            className={`text-sm font-medium transition-colors hover:text-white ${isActive('/') ? 'text-white' : 'text-[var(--color-gp-text-muted)]'}`}
+          >
             Home
           </Link>
-          <Link href="/driver" className={`text-sm font-medium transition-colors hover:text-white ${isActive('/driver') ? 'text-white' : 'text-[var(--color-gp-text-muted)]'}`}>
-            Driver
-          </Link>
-          <Link href="/operator" className={`text-sm font-medium transition-colors hover:text-white ${isActive('/operator') ? 'text-white' : 'text-[var(--color-gp-text-muted)]'}`}>
-            Operator
-          </Link>
+
+          {showDriverLink && (
+            <Link
+              href="/driver"
+              className={`text-sm font-medium transition-colors hover:text-white ${isActive('/driver') ? 'text-white' : 'text-[var(--color-gp-text-muted)]'}`}
+            >
+              Driver
+            </Link>
+          )}
+
+          {showOperatorLink && (
+            <Link
+              href="/operator"
+              className={`text-sm font-medium transition-colors hover:text-white ${isActive('/operator') ? 'text-white' : 'text-[var(--color-gp-text-muted)]'}`}
+            >
+              Operator
+            </Link>
+          )}
 
           {status === 'loading' ? (
             <div className="text-sm text-[var(--color-gp-text-muted)]">...</div>
           ) : session?.user ? (
             <div className="flex items-center gap-4">
-              <span className="text-sm text-[var(--color-gp-text-muted)]">{session.user.name}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-[var(--color-gp-text-muted)]">{session.user.name}</span>
+                <span className="rounded-full border border-[var(--color-gp-cyan)]/20 bg-[var(--color-gp-cyan)]/10 px-2 py-0.5 text-[0.7rem] font-medium uppercase tracking-wider text-[var(--color-gp-cyan)]">
+                  {session.user.role}
+                </span>
+              </div>
               <button
                 onClick={() => signOut({ callbackUrl: '/' })}
                 className="text-sm font-medium text-[var(--color-gp-text-muted)] transition-colors hover:text-white"
@@ -47,13 +76,16 @@ export default function Header() {
               </button>
             </div>
           ) : (
-            <Link href="/sign-in" className={`text-sm font-medium transition-colors hover:text-white ${isActive('/sign-in') ? 'text-white' : 'text-[var(--color-gp-text-muted)]'}`}>
+            <Link
+              href="/sign-in"
+              className={`text-sm font-medium transition-colors hover:text-white ${isActive('/sign-in') ? 'text-white' : 'text-[var(--color-gp-text-muted)]'}`}
+            >
               Sign in
             </Link>
           )}
         </nav>
 
-        <Link href="/driver" className="gp-btn-primary hidden items-center gap-2 px-6 py-3 sm:inline-flex">
+        <Link href={launchTarget} className="gp-btn-primary hidden items-center gap-2 px-6 py-3 sm:inline-flex">
           Launch app
           <ArrowRight className="h-4 w-4" />
         </Link>

@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ShieldCheck, Zap } from 'lucide-react';
+import Link from 'next/link';
+import { ShieldCheck, Zap, Mail, Lock } from 'lucide-react';
 
 export default function SignInForm() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function SignInForm() {
   const [mode, setMode] = useState<'DRIVER' | 'OPERATOR'>('DRIVER');
   const [email, setEmail] = useState(demoDriverEmail ?? '');
   const [password, setPassword] = useState(demoDriverPassword ?? '');
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -28,7 +30,6 @@ export default function SignInForm() {
       setPassword(demoDriverPassword ?? '');
       return;
     }
-
     setEmail(demoOperatorEmail ?? '');
     setPassword(demoOperatorPassword ?? '');
   }
@@ -57,13 +58,14 @@ export default function SignInForm() {
   }
 
   return (
-    <div className="grid w-full max-w-6xl gap-12 lg:grid-cols-[1fr_0.95fr] lg:items-center">
+    <div className="grid w-full max-w-6xl mx-auto gap-12 lg:grid-cols-[1fr_0.95fr] lg:items-center">
+      {/* ── Left: Welcome copy ── */}
       <div className="space-y-8">
-        <div className="gp-badge rounded-full px-4 py-2 text-[0.82rem] text-[var(--color-gp-text-muted)]">
+        <div className="gp-badge inline-flex items-center gap-2 rounded-full px-4 py-2 text-[0.82rem] text-[var(--color-gp-text-muted)]">
           <ShieldCheck className="h-3.5 w-3.5 text-[var(--color-gp-cyan)]" /> Secure sign-in
         </div>
         <div className="space-y-5">
-          <h1 className="text-6xl font-bold tracking-tight text-white">
+          <h1 className="text-5xl font-bold tracking-tight text-white sm:text-6xl">
             Welcome back to <span className="gp-gradient-text">GridPulse.</span>
           </h1>
           <p className="max-w-xl text-lg leading-8 text-[var(--color-gp-text-muted)]">
@@ -84,8 +86,10 @@ export default function SignInForm() {
         </ul>
       </div>
 
+      {/* ── Right: Sign-in card ── */}
       <div className="gp-panel rounded-[2rem] p-6">
         <div className="rounded-[1.5rem] border border-white/10 bg-[rgba(4,16,29,0.9)] p-6">
+          {/* Header */}
           <div className="mb-6 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-gp-cyan)] to-[var(--color-gp-green)]">
               <Zap className="h-4 w-4 fill-[var(--color-gp-bg)] text-[var(--color-gp-bg)]" />
@@ -96,6 +100,7 @@ export default function SignInForm() {
             </div>
           </div>
 
+          {/* Role switcher */}
           <div className="mb-6 grid grid-cols-2 rounded-full border border-white/10 bg-white/[0.03] p-1">
             <button
               type="button"
@@ -113,31 +118,98 @@ export default function SignInForm() {
             </button>
           </div>
 
+          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <label className="block text-sm">
               <span className="mb-2 block font-medium uppercase tracking-[0.18em] text-[var(--color-gp-text-dim)]">Email</span>
-              <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="gp-input" />
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-gp-text-dim)]" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@grid.co"
+                  className="gp-input pl-11"
+                />
+              </div>
             </label>
 
             <label className="block text-sm">
               <span className="mb-2 block font-medium uppercase tracking-[0.18em] text-[var(--color-gp-text-dim)]">Password</span>
-              <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} className="gp-input" />
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-gp-text-dim)]" />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="gp-input pl-11"
+                />
+              </div>
             </label>
 
-            {error && <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">{error}</div>}
+            <div className="flex items-center justify-between text-sm">
+              <label className="flex items-center gap-2 cursor-pointer text-[var(--color-gp-text-muted)]">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="h-4 w-4 rounded border-white/20 bg-white/5 accent-[var(--color-gp-cyan)]"
+                />
+                Remember me
+              </label>
+              <span className="cursor-pointer text-[var(--color-gp-cyan)] transition-colors hover:text-white">
+                Forgot password?
+              </span>
+            </div>
 
-            <button type="submit" disabled={loading} className="gp-btn-primary flex w-full items-center justify-center gap-2 py-3.5 text-base">
+            {error && (
+              <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="gp-btn-primary flex w-full items-center justify-center gap-2 py-3.5 text-base"
+            >
               {loading ? 'Signing in...' : `Continue as ${mode === 'DRIVER' ? 'driver' : 'operator'}`}
+              {!loading && <span>→</span>}
             </button>
           </form>
 
-          {(demoOperatorEmail || demoOperatorPassword || demoDriverEmail || demoDriverPassword) && (
-            <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.02] p-4 text-sm text-[var(--color-gp-text-muted)]">
+          {/* Social sign-in (visual only) */}
+          <div className="mt-6 text-center text-sm text-[var(--color-gp-text-dim)]">or continue with</div>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/[0.06]"
+            >
+              Google
+            </button>
+            <button
+              type="button"
+              className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/[0.06]"
+            >
+              Microsoft
+            </button>
+          </div>
+
+          <p className="mt-6 text-center text-sm text-[var(--color-gp-text-muted)]">
+            No account?{' '}
+            <Link href="/sign-up" className="font-medium text-[var(--color-gp-cyan)] transition-colors hover:text-white">
+              Request access
+            </Link>
+          </p>
+
+          {(demoOperatorEmail || demoDriverEmail) && (
+            <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4 text-sm text-[var(--color-gp-text-muted)]">
               {demoOperatorEmail && demoOperatorPassword && (
                 <div><span className="font-medium text-white">Operator:</span> {demoOperatorEmail} / {demoOperatorPassword}</div>
               )}
               {demoDriverEmail && demoDriverPassword && (
-                <div className={demoOperatorEmail && demoOperatorPassword ? 'mt-1' : ''}><span className="font-medium text-white">Driver:</span> {demoDriverEmail} / {demoDriverPassword}</div>
+                <div className={demoOperatorEmail ? 'mt-1' : ''}><span className="font-medium text-white">Driver:</span> {demoDriverEmail} / {demoDriverPassword}</div>
               )}
             </div>
           )}
