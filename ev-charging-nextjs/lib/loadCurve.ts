@@ -35,6 +35,16 @@ type LoadCurveDb = {
       };
     }): Promise<SlotRecord[]>;
   };
+  booking: {
+    count(args: {
+      where: {
+        stationId: string;
+        status: 'CONFIRMED';
+        slotStart: { lte: Date };
+        slotEnd: { gt: Date };
+      };
+    }): Promise<number>;
+  };
 };
 
 export function startOfDay(date: Date) {
@@ -83,10 +93,22 @@ export async function buildLoadCurveResponse(db: LoadCurveDb, stationId: string,
 
   const peakBookedKw = slots.reduce((max, slot) => Math.max(max, slot.bookedKw), 0);
 
+  // Active sessions are bookings whose slot window actually contains "now",
+  // not an estimate derived from peak booked kW.
+  const activeSessions = await db.booking.count({
+    where: {
+      stationId,
+      status: 'CONFIRMED',
+      slotStart: { lte: now },
+      slotEnd: { gt: now },
+    },
+  });
+
   return {
     station,
     updatedAt: now.toISOString(),
     peakBookedKw,
+    activeSessions,
     points: slots.map((slot) => ({
       id: slot.id,
       time: slot.startTime.toISOString(),

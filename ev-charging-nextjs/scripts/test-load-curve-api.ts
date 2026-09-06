@@ -36,6 +36,11 @@ async function run() {
           ];
         },
       },
+      booking: {
+        async count() {
+          return 3;
+        },
+      },
     },
     'station-1',
     now
@@ -45,6 +50,7 @@ async function run() {
   assert.equal(response.station.name, 'Demo Station');
   assert.equal(response.points.length, 2);
   assert.equal(response.peakBookedKw, 85);
+  assert.equal(response.activeSessions, 3);
   assert.equal(response.updatedAt, now.toISOString());
   assert.match(response.points[0].label, /\d{2}:\d{2}/);
 

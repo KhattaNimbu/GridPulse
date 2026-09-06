@@ -18,6 +18,7 @@ export type LoadCurveResponse = {
   };
   updatedAt: string;
   peakBookedKw: number;
+  activeSessions: number;
   points: LoadCurvePoint[];
 };
 

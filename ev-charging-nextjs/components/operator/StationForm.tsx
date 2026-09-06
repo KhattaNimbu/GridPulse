@@ -5,11 +5,13 @@ import { useState } from 'react';
 export default function StationForm({ onSuccess }: { onSuccess: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [warning, setWarning] = useState('');
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setWarning('');
 
     const formData = new FormData(e.currentTarget);
     const data = {
@@ -33,6 +35,10 @@ export default function StationForm({ onSuccess }: { onSuccess: () => void }) {
         throw new Error(payload?.error || 'Failed to create station');
       }
 
+      if (payload?.slotsGenerated === false) {
+        setWarning('Station created, but bookable slots could not be generated. Contact support or try recreating the station.');
+      }
+
       (e.target as HTMLFormElement).reset();
       onSuccess();
     } catch (err: unknown) {
@@ -47,6 +53,7 @@ export default function StationForm({ onSuccess }: { onSuccess: () => void }) {
       <h2 className="text-xl font-bold mb-4 text-slate-100">Add New Station</h2>
       
       {error && <div className="text-red-400 text-sm mb-4 bg-red-500/10 border border-red-500/20 p-3 rounded-lg">{error}</div>}
+      {warning && <div className="text-amber-400 text-sm mb-4 bg-amber-500/10 border border-amber-500/20 p-3 rounded-lg">{warning}</div>}
 
       <div>
         <label className="block text-sm font-medium mb-1 text-slate-300">Name</label>
@@ -89,7 +96,7 @@ export default function StationForm({ onSuccess }: { onSuccess: () => void }) {
           disabled={loading}
           className="w-full gp-btn-primary"
         >
-          {loading ? 'Creating...' : 'Create Station'}
+          {loading ? 'Creating station and generating slots…' : 'Create Station'}
         </button>
       </div>
     </form>

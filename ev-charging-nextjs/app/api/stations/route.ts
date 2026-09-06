@@ -49,12 +49,23 @@ export async function POST(request: Request) {
       },
     });
 
-    // Generate slots for the new station asynchronously
-    // In v1, we generate slots for the next 7 days upon creation
-    generateInitialSlots(station.id, station.maxCapacityKw).catch(console.error);
-    await auditLog('station_created', { operatorId: session.user.id, stationId: station.id })
+    // Slot generation is awaited (not fire-and-forget) so a failure is
+    // visible to the caller instead of leaving a station with no bookable
+    // slots and no indication anything went wrong.
+    let slotsGenerated = true;
+    try {
+      await generateInitialSlots(station.id, station.maxCapacityKw);
+      await auditLog('station_created', { operatorId: session.user.id, stationId: station.id });
+    } catch (slotError) {
+      slotsGenerated = false;
+      console.error('Failed to generate initial slots for station:', station.id, slotError);
+      await errorAlert('slot_generation_failed', {
+        stationId: station.id,
+        error: slotError instanceof Error ? slotError.message : String(slotError),
+      });
+    }
 
-    return NextResponse.json(station, { status: 201 });
+    return NextResponse.json({ ...station, slotsGenerated }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.issues }, { status: 400 });

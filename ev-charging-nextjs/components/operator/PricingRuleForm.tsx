@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { CURRENCY_SYMBOL } from '@/lib/currency';
 
 type PricingRule = {
   basePrice: number;
@@ -61,7 +62,7 @@ export default function PricingRuleForm({ stationId, initialRule, onSuccess }: P
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <label className="block text-sm">
-          <span className="mb-1 block font-medium text-slate-300">Base Price (₹)</span>
+          <span className="mb-1 block font-medium text-slate-300">Base Price ({CURRENCY_SYMBOL})</span>
           <input
             type="number"
             min="0"

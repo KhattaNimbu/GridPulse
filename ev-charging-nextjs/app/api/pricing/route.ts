@@ -8,8 +8,8 @@ import { auditLog } from '@/lib/logger';
 
 const pricingRuleSchema = z.object({
   stationId: z.string(),
-  basePrice: z.number().nonnegative(),
-  demandMultiplier: z.number().nonnegative(),
+  basePrice: z.number().nonnegative().max(1000, 'Base price is unreasonably high'),
+  demandMultiplier: z.number().nonnegative().max(10, 'Demand multiplier is unreasonably high'),
 });
 
 export async function GET(request: Request) {
