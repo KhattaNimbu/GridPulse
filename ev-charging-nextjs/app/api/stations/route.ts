@@ -16,8 +16,11 @@ const stationSchema = z.object({
 
 export async function GET() {
   try {
-    await requireSession();
+    const session = await requireSession();
+    // Operators only ever manage their own stations. Drivers browse the
+    // full network to find a place to charge.
     const stations = await prisma.station.findMany({
+      where: session.user.role === 'OPERATOR' ? { operatorId: session.user.id } : undefined,
       include: {
         pricingRule: true,
       },
@@ -25,6 +28,9 @@ export async function GET() {
     });
     return NextResponse.json(stations);
   } catch (error) {
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     console.error('Failed to fetch stations:', error);
     return NextResponse.json({ error: 'Failed to fetch stations' }, { status: 500 });
   }

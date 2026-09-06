@@ -58,6 +58,9 @@ export async function GET(request: Request) {
       prices,
     });
   } catch (error) {
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     console.error('Failed to compute pricing:', error);
     return NextResponse.json({ error: 'Failed to compute pricing' }, { status: 500 });
   }

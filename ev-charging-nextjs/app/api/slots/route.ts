@@ -12,6 +12,14 @@ export async function GET(request: Request) {
 
   try {
     await requireSession();
+    const station = await prisma.station.findUnique({
+      where: { id: stationId },
+      select: { id: true },
+    });
+    if (!station) {
+      return NextResponse.json({ error: 'Station not found' }, { status: 404 });
+    }
+
     const slots = await prisma.slot.findMany({
       where: {
         stationId,
@@ -24,6 +32,9 @@ export async function GET(request: Request) {
     });
     return NextResponse.json(slots);
   } catch (error) {
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     console.error('Failed to fetch slots:', error);
     return NextResponse.json({ error: 'Failed to fetch slots' }, { status: 500 });
   }

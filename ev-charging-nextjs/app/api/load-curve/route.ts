@@ -12,7 +12,18 @@ export async function GET(request: Request) {
   }
 
   try {
-    await requireRole('OPERATOR');
+    const session = await requireRole('OPERATOR');
+    const station = await prisma.station.findUnique({
+      where: { id: stationId },
+      select: { operatorId: true },
+    });
+    if (!station) {
+      return NextResponse.json({ error: 'Station not found' }, { status: 404 });
+    }
+    if (station.operatorId !== session.user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const response = await buildLoadCurveResponse(prisma, stationId, new Date());
     if (!response) {
       return NextResponse.json({ error: 'Station not found' }, { status: 404 });
