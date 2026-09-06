@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
-import { ArrowRight, Zap } from 'lucide-react';
+import { Zap } from 'lucide-react';
 
 export default function Header() {
   const pathname = usePathname();
@@ -20,75 +20,65 @@ export default function Header() {
   // CTA target based on role
   const launchTarget = userRole === 'OPERATOR' ? '/operator' : '/driver';
 
+  // Active nav reads as switched on via Mint Green; inactive stays true black.
+  const navLink = (path: string) =>
+    `text-[14px] font-medium transition-colors ${
+      isActive(path) ? 'text-mint-green' : 'text-true-black hover:text-mint-green'
+    }`;
+
   return (
-    <header className="sticky top-0 z-50 border-b border-[var(--color-gp-border)] bg-[var(--color-gp-bg)]/88 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
-        <Link href="/" className="flex items-center gap-3 transition-opacity hover:opacity-85">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-gp-cyan)] via-[#2cf1dd] to-[var(--color-gp-green)] shadow-[0_0_24px_rgba(34,211,238,0.28)]">
-            <Zap className="h-4 w-4 fill-[var(--color-gp-bg)] text-[var(--color-gp-bg)]" />
-          </div>
-          <span className="text-[1.75rem] font-bold tracking-tight text-white">
-            Grid<span className="text-[#46f0d1]">Pulse</span>
+    <header className="sticky top-0 z-50 bg-paper-white">
+      <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-8 px-6 py-4">
+        <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
+          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-mint-green">
+            <Zap className="h-4 w-4 fill-paper-white text-paper-white" />
+          </span>
+          <span className="text-[20px] font-semibold tracking-[-0.2px] text-ink-black">
+            GridPulse
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-10 md:flex">
-          <Link
-            href="/"
-            className={`text-sm font-medium transition-colors hover:text-white ${isActive('/') ? 'text-white' : 'text-[var(--color-gp-text-muted)]'}`}
-          >
+        <nav className="hidden items-center gap-7 md:flex">
+          <Link href="/" className={navLink('/')}>
             Home
           </Link>
 
           {showDriverLink && (
-            <Link
-              href="/driver"
-              className={`text-sm font-medium transition-colors hover:text-white ${isActive('/driver') ? 'text-white' : 'text-[var(--color-gp-text-muted)]'}`}
-            >
+            <Link href="/driver" className={navLink('/driver')}>
               Driver
             </Link>
           )}
 
           {showOperatorLink && (
-            <Link
-              href="/operator"
-              className={`text-sm font-medium transition-colors hover:text-white ${isActive('/operator') ? 'text-white' : 'text-[var(--color-gp-text-muted)]'}`}
-            >
+            <Link href="/operator" className={navLink('/operator')}>
               Operator
-            </Link>
-          )}
-
-          {status === 'loading' ? (
-            <div className="text-sm text-[var(--color-gp-text-muted)]">...</div>
-          ) : session?.user ? (
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-[var(--color-gp-text-muted)]">{session.user.name}</span>
-                <span className="rounded-full border border-[var(--color-gp-cyan)]/20 bg-[var(--color-gp-cyan)]/10 px-2 py-0.5 text-[0.7rem] font-medium uppercase tracking-wider text-[var(--color-gp-cyan)]">
-                  {session.user.role}
-                </span>
-              </div>
-              <button
-                onClick={() => signOut({ callbackUrl: '/' })}
-                className="text-sm font-medium text-[var(--color-gp-text-muted)] transition-colors hover:text-white"
-              >
-                Sign out
-              </button>
-            </div>
-          ) : (
-            <Link
-              href="/sign-in"
-              className={`text-sm font-medium transition-colors hover:text-white ${isActive('/sign-in') ? 'text-white' : 'text-[var(--color-gp-text-muted)]'}`}
-            >
-              Sign in
             </Link>
           )}
         </nav>
 
-        <Link href={launchTarget} className="gp-btn-primary hidden items-center gap-2 px-6 py-3 sm:inline-flex">
-          Launch app
-          <ArrowRight className="h-4 w-4" />
-        </Link>
+        <div className="flex items-center gap-3">
+          {status === 'loading' ? (
+            <span className="text-[14px] text-muted-gray">…</span>
+          ) : session?.user ? (
+            <>
+              <span className="hidden items-center gap-2 sm:flex">
+                <span className="text-[14px] text-true-black">{session.user.name}</span>
+                <span className="gp-tag text-mint-green">{session.user.role}</span>
+              </span>
+              <button type="button" onClick={() => signOut({ callbackUrl: '/' })} className="gp-btn-ghost">
+                Sign out
+              </button>
+            </>
+          ) : (
+            <Link href="/sign-in" className="gp-btn-ghost">
+              Sign in
+            </Link>
+          )}
+
+          <Link href={launchTarget} className="gp-btn-primary hidden text-[14px] sm:inline-flex">
+            Launch app
+          </Link>
+        </div>
       </div>
     </header>
   );
