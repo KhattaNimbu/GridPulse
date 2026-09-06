@@ -5,7 +5,7 @@ export default function Home() {
   const platformFeatures: Array<{ title: string; desc: string; icon: React.ReactNode }> = [
     {
       title: 'Prophet-powered forecasts',
-      desc: '24-hour demand forecasts in 30-minute buckets, retrained nightly on session history.',
+      desc: '24-hour demand forecasts in 30-minute buckets, trained on session history per station.',
       icon: <LineChart className="h-5 w-5 text-[var(--color-gp-cyan)]" />,
     },
     {
@@ -73,8 +73,8 @@ export default function Home() {
 
             <div className="grid gap-6 border-t border-[var(--color-gp-border)] pt-8 sm:grid-cols-3">
               {[
-                ['37%', 'Peak load flattened'],
-                ['99.98%', 'Booking integrity'],
+                ['Serializable', 'Transactional booking guard'],
+                ['30 min', 'Demand forecast buckets'],
                 ['24h', 'Forecast horizon'],
               ].map(([value, label]) => (
                 <div key={label}>
@@ -225,13 +225,13 @@ export default function Home() {
               Predict demand before it hits your <span className="gp-gradient-text">transformers.</span>
             </h3>
             <p className="text-lg leading-8 text-[var(--color-gp-text-muted)]">
-              A dedicated FastAPI plus Prophet service produces 30-minute demand curves per station, retrained nightly and fed directly into pricing and capacity logic.
+              A dedicated FastAPI plus Prophet service produces 30-minute demand curves per station and feeds them directly into pricing and capacity logic. Retraining is triggered manually per station today, not on an automatic schedule.
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
               {[
-                ['±6.2%', 'MAPE at 24h horizon'],
                 ['30 min', 'Bucket resolution'],
-                ['Nightly', 'Auto-retrain'],
+                ['24h', 'Forecast horizon'],
+                ['Manual', 'Retrain trigger'],
                 ['Per-station', 'Model isolation'],
               ].map(([title, desc]) => (
                 <div key={title} className="gp-stat-card p-5">
