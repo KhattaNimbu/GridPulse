@@ -1,210 +1,419 @@
 @import "tailwindcss";
 
-@theme inline {
-  --color-gp-bg: #020813;
-  --color-gp-surface: #0a1628;
-  --color-gp-surface-2: #0d1b2f;
-  --color-gp-card: rgba(255, 255, 255, 0.03);
-  --color-gp-card-hover: rgba(255, 255, 255, 0.06);
-  --color-gp-border: rgba(255, 255, 255, 0.08);
-  --color-gp-border-active: rgba(34, 211, 238, 0.4);
-  --color-gp-cyan: #22d3ee;
-  --color-gp-green: #4ade80;
-  --color-gp-text: #e2e8f0;
-  --color-gp-text-muted: #94a3b8;
-  --color-gp-text-dim: #64748b;
-  --font-sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "JetBrains Mono", "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+/*
+ * GridPulse design system — Mintlify style reference (see /Design.md).
+ *
+ * Monochrome discipline: white canvas, near-black text, and Mint Green as the
+ * only chromatic accent. The marketing hero is the single dark, colored surface
+ * in the system; everything else reverts to white surfaces and black type.
+ */
+@theme {
+  /* ── Colors ─────────────────────────────────────────────────────────── */
+  --color-mint-green: #0c8c5e;
+  --color-ink-black: #08090a;
+  --color-true-black: #000000;
+  --color-paper-white: #ffffff;
+  --color-mist-gray: #f2f2f2;
+  --color-cloud-gray: #dddddd;
+
+  /* Derived neutral. Design.md calls for "muted gray" placeholders and
+     low-emphasis copy but ships no token for it. */
+  --color-muted-gray: #6b6f72;
+
+  /* Functional status colors. Deliberately outside the brand palette and used
+     only for form errors and grid-stress warnings — never decoratively.
+     Success reuses Mint Green so the accent rule still holds. */
+  --color-signal-red: #b42318;
+  --color-signal-amber: #b54708;
+
+  /* ── Typography ─────────────────────────────────────────────────────── */
+  --font-inter: var(--font-inter-family), ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: var(--font-inter);
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --text-caption: 13px;
+  --text-caption--line-height: 1.5;
+  --text-caption--letter-spacing: 0.65px;
+
+  --text-body: 16px;
+  --text-body--line-height: 1.5;
+  --text-body--letter-spacing: -0.16px;
+
+  --text-subheading: 20px;
+  --text-subheading--line-height: 1.3;
+  --text-subheading--letter-spacing: -0.2px;
+
+  --text-heading-sm: 24px;
+  --text-heading-sm--line-height: 1.33;
+  --text-heading-sm--letter-spacing: -0.24px;
+
+  --text-heading: 40px;
+  --text-heading--line-height: 1.15;
+  --text-heading--letter-spacing: -0.4px;
+
+  --text-display: 57px;
+  --text-display--line-height: 1.1;
+  --text-display--letter-spacing: -1.14px;
+
+  /* ── Radii ──────────────────────────────────────────────────────────── */
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-2xl: 16px;
+  --radius-3xl: 24px;
+
+  /* ── Shadows ────────────────────────────────────────────────────────── */
+  --shadow-sm: lab(2.42579 -0.165291 -0.470081 / 0.03) 0px 2px 4px 0px;
+  --shadow-sm-2: lab(100 0 0 / 0.05) 0px 2px 4px 0px;
 }
 
-html {
-  background: var(--color-gp-bg);
-  color: var(--color-gp-text);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+:root {
+  /* Layout rhythm. Kept out of @theme so Tailwind's own spacing scale
+     (p-4, gap-6, …) keeps its default 0.25rem step. */
+  --page-max-width: 1200px;
+  --section-gap: 80px;
+  --card-padding: 24px;
+  --element-gap: 12px;
+
+  /* Named radii, mirroring Design.md's component geometry. */
+  --radius-tags: 4px;
+  --radius-cards: 16px;
+  --radius-inputs: 4px;
+  --radius-buttons: 4px;
+  --radius-large-containers: 24px;
+
+  /* Mint tint used for feature-card washes and active nav rows. */
+  --mint-wash: rgba(12, 140, 94, 0.06);
+  --mint-wash-strong: rgba(12, 140, 94, 0.1);
+
+  /* The dark hero band — the only colored surface in the system. */
+  --hero-teal-deep: #04372c;
+  --hero-teal: #0a6a49;
+  --hero-mint: #0c8c5e;
 }
 
-body {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: var(--color-gp-bg);
+@layer base {
+  html {
+    background: var(--color-paper-white);
+    color: var(--color-true-black);
+    font-family: var(--font-inter);
+    font-feature-settings: "ss01" on, "cv11" on;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-paper-white);
+    font-size: var(--text-body);
+    line-height: 1.5;
+    letter-spacing: -0.16px;
+  }
 }
 
-.gp-card {
-  background: var(--color-gp-card);
-  border: 1px solid var(--color-gp-border);
-  border-radius: 0.75rem;
-  backdrop-filter: blur(12px);
-}
+/*
+ * Component classes live in the `components` layer so that Tailwind utilities
+ * — which sit in the later `utilities` layer — can still override them at the
+ * call site (`gp-input pl-9`, `gp-select sm:w-40`, `gp-tag text-mint-green`).
+ * Unlayered rules would beat every utility regardless of source order.
+ */
+@layer components {
 
-.gp-card:hover {
-  background: var(--color-gp-card-hover);
-}
+/* ── Buttons ──────────────────────────────────────────────────────────── */
 
-.gp-card-active {
-  background: var(--color-gp-card);
-  border: 1px solid var(--color-gp-border-active);
-  border-radius: 0.75rem;
-  box-shadow: 0 0 24px rgba(34, 211, 238, 0.06);
-}
-
-.gp-gradient-text {
-  background: linear-gradient(135deg, var(--color-gp-cyan), var(--color-gp-green));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
+/* Highest-weight action — the single dark filled variant in the system. */
 .gp-btn-primary {
-  background: linear-gradient(135deg, var(--color-gp-cyan), #28e7cf 48%, #8cf94e 100%);
-  color: #020813;
-  font-weight: 600;
-  padding: 0.625rem 1.5rem;
-  border-radius: 9999px;
-  transition: all 0.2s ease;
-  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--color-ink-black);
+  color: var(--color-paper-white);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.5;
+  padding: 8px 16px;
+  border: 1px solid var(--color-ink-black);
+  border-radius: var(--radius-buttons);
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
   cursor: pointer;
 }
 
-.gp-btn-primary:hover {
-  box-shadow: 0 0 20px rgba(34, 211, 238, 0.25);
-  transform: translateY(-1px);
+.gp-btn-primary:hover:not(:disabled) {
+  background: #1d1f21;
+  border-color: #1d1f21;
 }
 
 .gp-btn-primary:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
 }
 
+/* Secondary action. Separation comes from a 1px Cloud Gray border, never a shadow. */
 .gp-btn-secondary {
-  background: transparent;
-  color: var(--color-gp-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--color-paper-white);
+  color: var(--color-true-black);
+  font-size: 15px;
   font-weight: 500;
-  padding: 0.625rem 1.5rem;
-  border-radius: 9999px;
-  border: 1px solid var(--color-gp-border);
-  transition: all 0.2s ease;
+  line-height: 1.5;
+  padding: 8px 16px;
+  border: 1px solid var(--color-cloud-gray);
+  border-radius: var(--radius-buttons);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
   cursor: pointer;
 }
 
-.gp-btn-secondary:hover {
-  border-color: var(--color-gp-cyan);
-  color: var(--color-gp-cyan);
+.gp-btn-secondary:hover:not(:disabled) {
+  background: var(--color-mist-gray);
+  border-color: #c9c9c9;
 }
 
-.gp-input {
+.gp-btn-secondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Navigation action that should not compete with the primary CTA. */
+.gp-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: var(--color-true-black);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 12px;
+  border: none;
+  border-radius: var(--radius-buttons);
+  transition: background-color 0.15s ease;
+  cursor: pointer;
+}
+
+.gp-btn-ghost:hover:not(:disabled) {
+  background: var(--color-mist-gray);
+}
+
+.gp-btn-primary:focus-visible,
+.gp-btn-secondary:focus-visible,
+.gp-btn-ghost:focus-visible {
+  outline: 2px solid var(--color-mint-green);
+  outline-offset: 2px;
+}
+
+/* ── Surfaces ─────────────────────────────────────────────────────────── */
+
+.gp-card {
+  background: var(--color-paper-white);
+  border: 1px solid var(--color-mist-gray);
+  border-radius: var(--radius-cards);
+  box-shadow: var(--shadow-sm-2);
+}
+
+.gp-card-interactive {
+  transition: border-color 0.15s ease;
+}
+
+.gp-card-interactive:hover {
+  border-color: var(--color-cloud-gray);
+}
+
+/* Selected state. Mint is a hairline and a wash, never a fill. */
+.gp-card-active {
+  border-color: rgba(12, 140, 94, 0.45);
+  background: var(--mint-wash);
+}
+
+/* Large container — the 24px radius tier. */
+.gp-panel {
+  background: var(--color-paper-white);
+  border: 1px solid var(--color-mist-gray);
+  border-radius: var(--radius-large-containers);
+  box-shadow: var(--shadow-sm-2);
+}
+
+/* Capability card from the 'Built for the intelligence age' grid. */
+.gp-feature-card {
+  background: var(--mint-wash);
+  border-radius: var(--radius-cards);
+  padding: var(--card-padding);
+}
+
+/* ── Type helpers ─────────────────────────────────────────────────────── */
+
+/* Category tag above a heading — never a heading itself. */
+.gp-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0.65px;
+  text-transform: uppercase;
+  color: var(--color-mint-green);
+}
+
+.gp-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--color-mint-green);
+}
+
+.gp-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--color-mist-gray);
+  border-radius: var(--radius-tags);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--color-muted-gray);
+  background: var(--color-paper-white);
+}
+
+.gp-link {
+  color: var(--color-mint-green);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.gp-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── Form controls ────────────────────────────────────────────────────── */
+
+.gp-input,
+.gp-select {
   width: 100%;
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid var(--color-gp-border);
-  border-radius: 0.75rem;
-  padding: 0.75rem 0.95rem;
-  color: var(--color-gp-text);
-  font-size: 0.875rem;
-  transition: border-color 0.2s ease;
-}
-
-.gp-input:focus {
-  outline: none;
-  border-color: var(--color-gp-cyan);
-  box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.1);
-}
-
-.gp-input::placeholder {
-  color: var(--color-gp-text-dim);
+  background: var(--color-paper-white);
+  border: 1px solid var(--color-cloud-gray);
+  border-radius: var(--radius-inputs);
+  padding: 9px 12px;
+  color: var(--color-true-black);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .gp-select {
-  width: 100%;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--color-gp-border);
-  border-radius: 0.75rem;
-  padding: 0.75rem 0.95rem;
-  color: var(--color-gp-text);
-  font-size: 0.875rem;
   appearance: none;
+  padding-right: 32px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' stroke='%236b6f72' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
 }
 
+.gp-input:focus,
 .gp-select:focus {
   outline: none;
-  border-color: var(--color-gp-cyan);
+  border-color: var(--color-mint-green);
+  box-shadow: 0 0 0 3px var(--mint-wash-strong);
 }
 
-.gp-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
+.gp-input::placeholder {
+  color: var(--color-muted-gray);
+}
+
+.gp-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
   font-weight: 500;
-  border: 1px solid var(--color-gp-border);
-  background: var(--color-gp-card);
+  line-height: 1.5;
+  color: var(--color-ink-black);
+  letter-spacing: 0;
+  text-transform: none;
 }
 
-.gp-grid-overlay {
-  background-image:
-    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-  background-size: 40px 40px;
+/* ── Status messages ──────────────────────────────────────────────────── */
+
+.gp-notice {
+  border-radius: var(--radius-inputs);
+  border: 1px solid var(--color-mist-gray);
+  background: var(--color-mist-gray);
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-ink-black);
 }
 
-.gp-glow {
-  box-shadow: 0 0 30px rgba(34, 211, 238, 0.08),
-              inset 0 1px 0 rgba(255,255,255,0.05);
+.gp-notice-error {
+  border-color: rgba(180, 35, 24, 0.25);
+  background: rgba(180, 35, 24, 0.06);
+  color: var(--color-signal-red);
 }
 
-.gp-panel {
-  background:
-    radial-gradient(circle at top left, rgba(34, 211, 238, 0.08), transparent 38%),
-    radial-gradient(circle at bottom right, rgba(74, 222, 128, 0.08), transparent 34%),
-    linear-gradient(180deg, rgba(10, 22, 40, 0.94), rgba(5, 13, 25, 0.96));
-  border: 1px solid var(--color-gp-border);
-  border-radius: 1.75rem;
-  backdrop-filter: blur(12px);
+.gp-notice-warning {
+  border-color: rgba(181, 71, 8, 0.25);
+  background: rgba(181, 71, 8, 0.06);
+  color: var(--color-signal-amber);
 }
 
-.gp-section-title {
-  font-size: clamp(2.8rem, 6vw, 5.2rem);
-  line-height: 0.98;
-  font-weight: 700;
-  letter-spacing: -0.04em;
+.gp-notice-success {
+  border-color: rgba(12, 140, 94, 0.25);
+  background: var(--mint-wash);
+  color: var(--color-mint-green);
 }
 
-.gp-orb {
-  position: absolute;
-  border-radius: 9999px;
-  filter: blur(90px);
-  pointer-events: none;
+/* ── Hero ─────────────────────────────────────────────────────────────── */
+
+/* The single colored surface in the system: a deep teal-to-mint sky carrying
+   the hand-illustrated cloud landscape. Nothing below the fold may do this. */
+.gp-hero {
+  background: linear-gradient(
+    180deg,
+    var(--hero-teal-deep) 0%,
+    var(--hero-teal) 58%,
+    var(--hero-mint) 100%
+  );
 }
 
-.gp-stat-card {
-  background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.02));
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 1.25rem;
+/* ── Skeletons ────────────────────────────────────────────────────────── */
+
+.gp-skeleton {
+  background: var(--color-mist-gray);
+  border-radius: var(--radius-inputs);
 }
+
+} /* end @layer components */
+
+/* ── Recharts ─────────────────────────────────────────────────────────── */
+/* Left unlayered: these target markup Recharts generates, not our own classes. */
 
 .recharts-cartesian-grid line {
-  stroke: rgba(255, 255, 255, 0.06) !important;
+  stroke: var(--color-mist-gray) !important;
 }
 
 .recharts-text {
-  fill: var(--color-gp-text-muted) !important;
-  font-size: 0.75rem;
+  fill: var(--color-muted-gray) !important;
+  font-size: 13px;
 }
 
 .recharts-tooltip-wrapper .recharts-default-tooltip {
-  background: var(--color-gp-surface) !important;
-  border: 1px solid var(--color-gp-border) !important;
-  border-radius: 0.5rem !important;
+  background: var(--color-paper-white) !important;
+  border: 1px solid var(--color-cloud-gray) !important;
+  border-radius: var(--radius-inputs) !important;
+  box-shadow: var(--shadow-sm-2) !important;
 }
 
+/* ── Scrollbar ────────────────────────────────────────────────────────── */
+
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -212,10 +421,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  background: var(--color-cloud-gray);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: #c4c4c4;
 }
