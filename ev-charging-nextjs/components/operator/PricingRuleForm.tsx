@@ -53,16 +53,18 @@ export default function PricingRuleForm({ stationId, initialRule, onSuccess }: P
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4 pt-4 border-t border-white/10">
-      <h3 className="text-lg font-semibold text-slate-200">Pricing Settings</h3>
-      <p className="mt-1 text-sm text-slate-400">Adjust off-peak base price and how strongly demand changes pricing.</p>
+    <form onSubmit={handleSubmit} className="pt-5">
+      <h3 className="text-[16px] font-medium tracking-[-0.16px] text-ink-black">Pricing settings</h3>
+      <p className="mt-1 text-[14px] text-muted-gray">
+        Adjust off-peak base price and how strongly demand changes pricing.
+      </p>
 
-      {error && <div className="mt-3 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">{error}</div>}
-      {message && <div className="mt-3 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-400">{message}</div>}
+      {error && <div className="gp-notice gp-notice-error mt-4">{error}</div>}
+      {message && <div className="gp-notice gp-notice-success mt-4">{message}</div>}
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <label className="block text-sm">
-          <span className="mb-1 block font-medium text-slate-300">Base Price ({CURRENCY_SYMBOL})</span>
+        <label className="block">
+          <span className="gp-label">Base price ({CURRENCY_SYMBOL})</span>
           <input
             type="number"
             min="0"
@@ -73,8 +75,8 @@ export default function PricingRuleForm({ stationId, initialRule, onSuccess }: P
           />
         </label>
 
-        <label className="block text-sm">
-          <span className="mb-1 block font-medium text-slate-300">Demand Multiplier</span>
+        <label className="block">
+          <span className="gp-label">Demand multiplier</span>
           <input
             type="number"
             min="0"
@@ -86,12 +88,8 @@ export default function PricingRuleForm({ stationId, initialRule, onSuccess }: P
         </label>
       </div>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="mt-4 gp-btn-secondary w-full sm:w-auto"
-      >
-        {loading ? 'Saving...' : 'Save Pricing'}
+      <button type="submit" disabled={loading} className="gp-btn-secondary mt-4 w-full sm:w-auto">
+        {loading ? 'Saving…' : 'Save pricing'}
       </button>
     </form>
   );

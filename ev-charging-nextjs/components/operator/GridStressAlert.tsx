@@ -14,13 +14,14 @@ export default function GridStressAlert({ data, threshold = 0.85 }: Props) {
 
   if (stressedPoints.length === 0) {
     return (
-      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-4 text-emerald-400 shadow-sm">
-        <div className="font-semibold flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-emerald-400 inline-block"></span>
+      <div className="gp-notice gp-notice-success">
+        <div className="flex items-center gap-2 font-medium">
+          <span className="gp-eyebrow-dot" />
           Grid stress is under control
         </div>
-        <p className="mt-1 text-sm text-emerald-500/80">
-          Peak load is at {(peakRatio * 100).toFixed(1)}% of station capacity, below the {(threshold * 100).toFixed(0)}% alert threshold.
+        <p className="mt-1 text-[14px]">
+          Peak load is at {(peakRatio * 100).toFixed(1)}% of station capacity, below the{' '}
+          {(threshold * 100).toFixed(0)}% alert threshold.
         </p>
       </div>
     );
@@ -29,14 +30,14 @@ export default function GridStressAlert({ data, threshold = 0.85 }: Props) {
   const firstStressPoint = stressedPoints[0];
 
   return (
-    <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-amber-400 shadow-sm">
-      <div className="font-semibold flex items-center gap-2">
-        <span className="h-2 w-2 rounded-full bg-amber-400 inline-block animate-pulse"></span>
+    <div className="gp-notice gp-notice-warning">
+      <div className="flex items-center gap-2 font-medium">
+        <span className="h-1.5 w-1.5 rounded-full bg-signal-amber" />
         Grid stress alert
       </div>
-      <p className="mt-1 text-sm text-amber-500/80">
-        Load crosses {(threshold * 100).toFixed(0)}% at {firstStressPoint.label}. Peak is {data.peakBookedKw.toFixed(1)} kW
-        against {data.station.maxCapacityKw.toFixed(1)} kW capacity.
+      <p className="mt-1 text-[14px]">
+        Load crosses {(threshold * 100).toFixed(0)}% at {firstStressPoint.label}. Peak is{' '}
+        {data.peakBookedKw.toFixed(1)} kW against {data.station.maxCapacityKw.toFixed(1)} kW capacity.
       </p>
     </div>
   );
