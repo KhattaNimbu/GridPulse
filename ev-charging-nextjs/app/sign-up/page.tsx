@@ -9,7 +9,6 @@ import { ShieldCheck, Zap, Mail, Lock, User, ArrowRight } from 'lucide-react';
 export default function SignUpPage() {
   const router = useRouter();
 
-  const [mode, setMode] = useState<'DRIVER' | 'OPERATOR'>('DRIVER');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -41,7 +40,6 @@ export default function SignUpPage() {
           name,
           email,
           password,
-          role: mode,
         }),
       });
 
@@ -58,14 +56,14 @@ export default function SignUpPage() {
         email,
         password,
         redirect: false,
-        callbackUrl: mode === 'DRIVER' ? '/driver' : '/operator',
+        callbackUrl: '/driver',
       });
 
       if (signInResult?.error) {
         // Account created but sign-in failed — redirect to sign-in
         router.push('/sign-in');
       } else {
-        router.push(signInResult?.url ?? (mode === 'DRIVER' ? '/driver' : '/operator'));
+        router.push(signInResult?.url ?? '/driver');
         router.refresh();
       }
     } catch {
@@ -94,13 +92,13 @@ export default function SignUpPage() {
               Join the <span className="gp-gradient-text">GridPulse</span> network.
             </h1>
             <p className="max-w-xl text-lg leading-8 text-[var(--color-gp-text-muted)]">
-              Create your account as a driver to book slots or as an operator to manage stations. Role-protected access keeps everything secure.
+              Create a driver account to browse stations and book charging slots. Operator accounts are provisioned separately and are not available through public sign-up.
             </p>
           </div>
           <ul className="space-y-3 text-[var(--color-gp-text-muted)]">
             {[
               'Instant access after registration',
-              'Role-based dashboards & permissions',
+              'Real-time station availability',
               'Capacity-protected booking from day one',
             ].map((item) => (
               <li key={item} className="flex items-center gap-3">
@@ -121,26 +119,12 @@ export default function SignUpPage() {
               </div>
               <div>
                 <div className="text-2xl font-semibold text-white">Sign up</div>
-                <div className="text-sm text-[var(--color-gp-text-muted)]">Create your GridPulse account</div>
+                <div className="text-sm text-[var(--color-gp-text-muted)]">Create your GridPulse driver account</div>
               </div>
             </div>
 
-            {/* Role switcher */}
-            <div className="mb-6 grid grid-cols-2 rounded-full border border-white/10 bg-white/[0.03] p-1">
-              <button
-                type="button"
-                onClick={() => setMode('DRIVER')}
-                className={`rounded-full px-4 py-3 text-sm font-medium transition-colors ${mode === 'DRIVER' ? 'bg-gradient-to-r from-[var(--color-gp-cyan)] to-[var(--color-gp-green)] text-[var(--color-gp-bg)]' : 'text-[var(--color-gp-text-muted)]'}`}
-              >
-                Driver
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode('OPERATOR')}
-                className={`rounded-full px-4 py-3 text-sm font-medium transition-colors ${mode === 'OPERATOR' ? 'bg-gradient-to-r from-[var(--color-gp-cyan)] to-[var(--color-gp-green)] text-[var(--color-gp-bg)]' : 'text-[var(--color-gp-text-muted)]'}`}
-              >
-                Operator
-              </button>
+            <div className="mb-6 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-[var(--color-gp-text-muted)]">
+              Looking for operator access? Operator accounts require admin provisioning and cannot be created here.
             </div>
 
             {/* Form */}
@@ -216,7 +200,7 @@ export default function SignUpPage() {
                 disabled={loading}
                 className="gp-btn-primary flex w-full items-center justify-center gap-2 py-3.5 text-base"
               >
-                {loading ? 'Creating account...' : `Create ${mode === 'DRIVER' ? 'driver' : 'operator'} account`}
+                {loading ? 'Creating account...' : 'Create driver account'}
                 {!loading && <ArrowRight className="h-4 w-4" />}
               </button>
             </form>

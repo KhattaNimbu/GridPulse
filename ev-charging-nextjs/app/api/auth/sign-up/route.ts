@@ -5,19 +5,15 @@ import { hash } from 'bcryptjs';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, email, password, role } = body;
+    const { name, email, password } = body;
 
     // ── Validation ──
-    if (!name || !email || !password || !role) {
+    // Public sign-up always creates DRIVER accounts. Operator accounts require
+    // a separate admin-provisioned or invitation-based path — never trust a
+    // client-supplied role here.
+    if (!name || !email || !password) {
       return NextResponse.json(
-        { error: 'All fields are required: name, email, password, role' },
-        { status: 400 }
-      );
-    }
-
-    if (!['DRIVER', 'OPERATOR'].includes(role)) {
-      return NextResponse.json(
-        { error: 'Role must be either DRIVER or OPERATOR' },
+        { error: 'All fields are required: name, email, password' },
         { status: 400 }
       );
     }
@@ -49,7 +45,7 @@ export async function POST(req: Request) {
         name: name.trim(),
         email: email.toLowerCase().trim(),
         passwordHash,
-        role,
+        role: 'DRIVER',
       },
       select: {
         id: true,
