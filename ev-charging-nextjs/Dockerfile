@@ -1,14 +1,28 @@
-FROM node:18-alpine
-
+# ---- deps: install once, cached across builds ----
+FROM node:20-alpine AS deps
 WORKDIR /app
-
 COPY package.json package-lock.json ./
-RUN npm install
+RUN npm ci
 
+# ---- builder: generate the Prisma client and build a production bundle ----
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
 RUN npx prisma generate
+RUN npm run build
+
+# ---- runner: minimal production image, no dev server, no source ----
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/prisma ./prisma
 
 EXPOSE 3000
-
-CMD ["sh", "-c", "npx prisma migrate deploy && npm run db:seed && npm run dev"]
+CMD ["node", "server.js"]

@@ -17,6 +17,36 @@ services:
       timeout: 5s
       retries: 10
 
+  # One-shot job: applies pending Prisma migrations. Runs to completion and
+  # exits; the web service waits for it instead of migrating on every boot.
+  migrate:
+    build:
+      context: ./ev-charging-nextjs
+      target: builder
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in the root .env file}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: npx prisma migrate deploy
+
+  # One-shot job: seeds demo users/stations. Idempotent — safe to run on
+  # every deploy. Runs only after migrations succeed.
+  seed:
+    build:
+      context: ./ev-charging-nextjs
+      target: builder
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in the root .env file}
+      DEMO_DRIVER_EMAIL: ${DEMO_DRIVER_EMAIL:?Set DEMO_DRIVER_EMAIL in the root .env file}
+      DEMO_DRIVER_PASSWORD: ${DEMO_DRIVER_PASSWORD:?Set DEMO_DRIVER_PASSWORD in the root .env file}
+      DEMO_OPERATOR_EMAIL: ${DEMO_OPERATOR_EMAIL:?Set DEMO_OPERATOR_EMAIL in the root .env file}
+      DEMO_OPERATOR_PASSWORD: ${DEMO_OPERATOR_PASSWORD:?Set DEMO_OPERATOR_PASSWORD in the root .env file}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    command: npm run db:seed
+
   web:
     build:
       context: ./ev-charging-nextjs
@@ -28,18 +58,18 @@ services:
       NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?Set NEXTAUTH_SECRET in the root .env file}
       FORECAST_SERVICE_API_KEY: ${FORECAST_SERVICE_API_KEY:?Set FORECAST_SERVICE_API_KEY in the root .env file}
-      DEMO_DRIVER_EMAIL: ${DEMO_DRIVER_EMAIL:?Set DEMO_DRIVER_EMAIL in the root .env file}
-      DEMO_DRIVER_PASSWORD: ${DEMO_DRIVER_PASSWORD:?Set DEMO_DRIVER_PASSWORD in the root .env file}
-      DEMO_OPERATOR_EMAIL: ${DEMO_OPERATOR_EMAIL:?Set DEMO_OPERATOR_EMAIL in the root .env file}
-      DEMO_OPERATOR_PASSWORD: ${DEMO_OPERATOR_PASSWORD:?Set DEMO_OPERATOR_PASSWORD in the root .env file}
       ADMIN_EMAILS: ${ADMIN_EMAILS:-}
       ALERT_WEBHOOK: ${ALERT_WEBHOOK:-}
     depends_on:
-      db:
-        condition: service_healthy
+      seed:
+        condition: service_completed_successfully
       forecasting-service:
-        condition: service_started
-    command: sh -c "npx prisma migrate deploy && npm run db:seed && npm run dev"
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   forecasting-service:
     build:
