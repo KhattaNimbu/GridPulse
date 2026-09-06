@@ -193,18 +193,18 @@ export default function Home() {
               them directly into pricing and capacity logic. Retraining is triggered manually per station
               today, not on an automatic schedule.
             </p>
-            <div className="mt-2 grid gap-6 sm:grid-cols-2">
+            <div className="mt-2 grid gap-4 sm:grid-cols-2">
               {[
                 ['30 min', 'Bucket resolution'],
                 ['24 h', 'Forecast horizon'],
                 ['Manual', 'Retrain trigger'],
                 ['Per-station', 'Model isolation'],
-              ].map(([title, desc]) => (
-                <div key={title} className="border-l border-mist-gray pl-4">
-                  <div className="text-[24px] font-semibold leading-[1.33] tracking-[-0.24px] text-ink-black">
-                    {title}
+              ].map(([value, label]) => (
+                <div key={value} className="gp-stat-card">
+                  <span className="gp-eyebrow">{label}</span>
+                  <div className="mt-2 text-[24px] font-semibold leading-[1.33] tracking-[-0.24px] text-ink-black">
+                    {value}
                   </div>
-                  <div className="mt-1 text-[14px] text-muted-gray">{desc}</div>
                 </div>
               ))}
             </div>
@@ -426,7 +426,7 @@ function ProductMockup() {
               ['Utilization', '68%'],
               ['Headroom', '188 kW'],
             ].map(([label, value]) => (
-              <div key={label} className="rounded-md border border-mist-gray px-3 py-2.5">
+              <div key={label} className="rounded-md border border-cloud-gray px-3 py-2.5">
                 <div className="text-[13px] text-muted-gray">{label}</div>
                 <div className="mt-0.5 text-[16px] font-medium text-ink-black">{value}</div>
               </div>
@@ -490,7 +490,7 @@ function BookingMockup() {
           <div
             key={time as string}
             className={`rounded-md border p-3 ${
-              selected ? 'border-mint-green bg-mint-green/6' : 'border-mist-gray'
+              selected ? 'border-mint-green bg-mint-green/6' : 'border-cloud-gray'
             }`}
           >
             <div className={`text-[16px] font-medium ${selected ? 'text-mint-green' : 'text-ink-black'}`}>
@@ -584,14 +584,14 @@ function ControlRoomMockup() {
         </span>
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+      <div className="mt-5 grid gap-4 sm:grid-cols-2">
         {[
           ['Peak booked load', '412 kW'],
           ['Capacity headroom', '188 kW'],
         ].map(([label, value]) => (
-          <div key={label} className="rounded-2xl border border-mist-gray p-5">
-            <div className="text-[13px] text-muted-gray">{label}</div>
-            <div className="mt-1 text-[24px] font-semibold leading-[1.33] tracking-[-0.24px] text-ink-black">
+          <div key={label} className="gp-stat-card">
+            <span className="gp-eyebrow">{label}</span>
+            <div className="mt-2 text-[40px] font-semibold leading-[1.15] tracking-[-0.4px] text-ink-black">
               {value}
             </div>
           </div>

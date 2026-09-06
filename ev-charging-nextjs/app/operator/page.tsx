@@ -35,12 +35,12 @@ type Station = {
 
 function Kpi({ label, value, unit, hint }: { label: string; value: string | null; unit?: string; hint?: string }) {
   return (
-    <div className="gp-card p-6">
-      <p className="text-[13px] text-muted-gray">{label}</p>
+    <div className="gp-stat-card">
+      <span className="gp-eyebrow">{label}</span>
       {value === null ? (
-        <p className="mt-1 text-[20px] font-medium tracking-[-0.2px] text-muted-gray">No data</p>
+        <p className="mt-2 text-[20px] font-medium tracking-[-0.2px] text-muted-gray">No data</p>
       ) : (
-        <p className="mt-1 text-[40px] font-semibold leading-[1.15] tracking-[-0.4px] text-ink-black">
+        <p className="mt-2 text-[40px] font-semibold leading-[1.15] tracking-[-0.4px] text-ink-black">
           {value}
           {unit && <span className="ml-1 text-[20px] font-normal tracking-[-0.2px] text-muted-gray">{unit}</span>}
         </p>
@@ -52,7 +52,7 @@ function Kpi({ label, value, unit, hint }: { label: string; value: string | null
 
 function KpiSkeleton() {
   return (
-    <div className="gp-card p-6">
+    <div className="gp-stat-card">
       <div className="gp-skeleton h-3 w-20 animate-pulse" />
       <div className="gp-skeleton mt-3 h-9 w-24 animate-pulse" />
     </div>

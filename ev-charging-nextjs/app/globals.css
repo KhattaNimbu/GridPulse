@@ -238,11 +238,20 @@
   box-shadow: var(--shadow-sm-2);
 }
 
-/* Capability card from the 'Built for the intelligence age' grid. */
-.gp-feature-card {
+/* The Mint-tinted wash surface: the capability card from the platform grid,
+   and the stat tiles that borrow it so a lone number can carry a section.
+   Same surface, different content. */
+.gp-feature-card,
+.gp-stat-card {
   background: var(--mint-wash);
   border-radius: var(--radius-cards);
   padding: var(--card-padding);
+}
+
+/* A stat tile has no body copy to give it mass, so it also takes a Mint
+   hairline — enough definition to read as a card on the white canvas. */
+.gp-stat-card {
+  border: 1px solid rgba(12, 140, 94, 0.16);
 }
 
 /* ── Type helpers ─────────────────────────────────────────────────────── */
