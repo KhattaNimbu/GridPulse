@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { useSlots } from '@/hooks/useSlots';
-import { CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Clock, AlertCircle, RefreshCw } from 'lucide-react';
 import useSWR from 'swr';
+import { formatCurrency } from '@/lib/currency';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -12,18 +13,36 @@ type StationSummary = {
   name: string;
 };
 
+type ConfirmedBooking = {
+  id: string;
+  stationId: string;
+  slotStart: string;
+  slotEnd: string;
+  requestedKw: number;
+  priceCharged: number;
+  status: string;
+};
+
 export default function SlotPicker({ stationId }: { stationId: string }) {
-  const { slots, error, mutate } = useSlots(stationId);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const { slots, error, mutate } = useSlots(stationId, () => setLastUpdated(new Date()));
   const { data: stations } = useSWR<StationSummary[]>('/api/stations', fetcher);
   const stationName = stations?.find((s) => s.id === stationId)?.name || 'Station';
 
   const [requestedKw, setRequestedKw] = useState(48);
   const [selectedSlotIndex, setSelectedSlotIndex] = useState<number | null>(null);
   const [bookingError, setBookingError] = useState('');
-  const [bookingSuccess, setBookingSuccess] = useState('');
+  const [confirmedBooking, setConfirmedBooking] = useState<ConfirmedBooking | null>(null);
   const [isBooking, setIsBooking] = useState(false);
 
-  if (error) return <div className="p-4 text-red-400">Failed to load slots</div>;
+  if (error) {
+    return (
+      <div className="gp-card flex items-center gap-2 p-4 text-red-400">
+        <AlertCircle className="h-4 w-4 shrink-0" /> Failed to load slots for this station. Try again shortly.
+      </div>
+    );
+  }
+
   if (!slots) {
     return (
       <div className="mt-6 flex flex-col gap-4">
@@ -38,6 +57,9 @@ export default function SlotPicker({ stationId }: { stationId: string }) {
     );
   }
 
+  // Use the last successful fetch time rather than a live clock read during
+  // render, so the expiry check stays a pure function of component state.
+  const now = lastUpdated?.getTime() ?? 0;
   const selectedSlot = selectedSlotIndex !== null ? slots[selectedSlotIndex] : null;
   const rate = selectedSlot?.price ?? 0;
   const estEnergy = requestedKw * 0.5;
@@ -47,7 +69,7 @@ export default function SlotPicker({ stationId }: { stationId: string }) {
     if (!selectedSlot) return;
 
     setBookingError('');
-    setBookingSuccess('');
+    setConfirmedBooking(null);
     setIsBooking(true);
 
     try {
@@ -64,10 +86,15 @@ export default function SlotPicker({ stationId }: { stationId: string }) {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to book');
+        // Capacity conflicts and expired slots mean the picker is showing
+        // stale availability — refresh it so the driver sees current state.
+        if (data.code === 'CAPACITY_EXCEEDED' || data.code === 'SLOT_EXPIRED' || data.code === 'BOOKING_CONFLICT') {
+          mutate();
+        }
+        throw new Error(data.error || 'Failed to book slot');
       }
 
-      setBookingSuccess('Booking confirmed!');
+      setConfirmedBooking(data as ConfirmedBooking);
       setSelectedSlotIndex(null);
       mutate();
     } catch (err: unknown) {
@@ -80,50 +107,77 @@ export default function SlotPicker({ stationId }: { stationId: string }) {
   return (
     <div className="mt-2 flex flex-col gap-6">
       <div>
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h3 className="font-semibold text-white">Pick a slot · Today</h3>
-          <div className="flex items-center gap-1.5 text-sm text-[var(--color-gp-text-muted)]">
-            <Clock className="w-4 h-4" /> 30-min buckets
+          <div className="flex items-center gap-3 text-sm text-[var(--color-gp-text-muted)]">
+            <span className="flex items-center gap-1.5">
+              <Clock className="w-4 h-4" /> 30-min buckets
+            </span>
+            {lastUpdated && (
+              <span className="flex items-center gap-1.5 text-xs text-[var(--color-gp-text-dim)]">
+                <RefreshCw className="w-3.5 h-3.5" /> Updated {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            )}
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {slots.slice(0, 8).map((slot, index) => {
-            const availableKw = slot.capacityKw - slot.bookedKw;
-            const isFull = availableKw < requestedKw;
-            const loadPct = Math.round((slot.bookedKw / slot.capacityKw) * 100);
-            const loadColor = loadPct > 80 ? 'bg-red-500' : loadPct > 50 ? 'bg-amber-500' : 'bg-[var(--color-gp-green)]';
-            const loadTextColor = loadPct > 80 ? 'text-red-400' : loadPct > 50 ? 'text-amber-400' : 'text-[var(--color-gp-green)]';
-            const isSelected = selectedSlotIndex === index;
-            const timeString = new Date(slot.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-            const slotRate = slot.price ?? 0;
-            const slotTotal = slotRate * (requestedKw * 0.5);
+        {slots.length === 0 ? (
+          <div className="gp-card border-dashed p-8 text-center text-sm text-[var(--color-gp-text-muted)]">
+            No bookable slots are available for this station right now.
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {slots.slice(0, 8).map((slot, index) => {
+              const availableKw = slot.capacityKw - slot.bookedKw;
+              const isExpired = new Date(slot.startTime).getTime() <= now;
+              const isFull = availableKw < requestedKw;
+              const isDisabled = isFull || isExpired;
+              const loadPct = slot.capacityKw > 0 ? Math.round((slot.bookedKw / slot.capacityKw) * 100) : 0;
+              const loadColor = loadPct > 80 ? 'bg-red-500' : loadPct > 50 ? 'bg-amber-500' : 'bg-[var(--color-gp-green)]';
+              const loadTextColor = loadPct > 80 ? 'text-red-400' : loadPct > 50 ? 'text-amber-400' : 'text-[var(--color-gp-green)]';
+              const isSelected = selectedSlotIndex === index;
+              const timeString = new Date(slot.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+              const slotRate = slot.price ?? null;
+              const slotTotal = slotRate !== null ? slotRate * (requestedKw * 0.5) : null;
 
-            return (
-              <div
-                key={slot.id}
-                onClick={() => !isFull && setSelectedSlotIndex(index)}
-                className={`cursor-pointer rounded-xl border p-4 transition-all ${
-                  isFull
-                    ? 'cursor-not-allowed border-white/5 bg-white/[0.02] opacity-50'
-                    : isSelected
-                      ? 'border-[var(--color-gp-border-active)] bg-[var(--color-gp-card-hover)] shadow-[0_0_15px_rgba(34,211,238,0.15)]'
-                      : 'border-[var(--color-gp-border)] bg-[var(--color-gp-card)] hover:border-white/20'
-                }`}
-              >
-                <div className={`mb-1 text-lg font-bold ${isSelected ? 'text-white' : 'text-[var(--color-gp-text-muted)]'}`}>
-                  {timeString}
-                </div>
-                <div className="flex flex-col gap-1 text-sm font-medium">
-                  <div className={`flex items-center gap-1.5 ${loadTextColor}`}>
-                    <span className={`h-2 w-2 rounded-full ${loadColor}`} /> {loadPct}%
+              return (
+                <button
+                  key={slot.id}
+                  type="button"
+                  disabled={isDisabled}
+                  onClick={() => setSelectedSlotIndex(index)}
+                  aria-pressed={isSelected}
+                  aria-label={`${timeString} slot, ${isExpired ? 'expired' : isFull ? 'full' : `${loadPct}% booked`}${slotTotal !== null ? `, estimated ${formatCurrency(slotTotal)}` : ''}`}
+                  className={`rounded-xl border p-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-gp-cyan)] ${
+                    isDisabled
+                      ? 'cursor-not-allowed border-white/5 bg-white/[0.02] opacity-50'
+                      : isSelected
+                        ? 'cursor-pointer border-[var(--color-gp-border-active)] bg-[var(--color-gp-card-hover)] shadow-[0_0_15px_rgba(34,211,238,0.15)]'
+                        : 'cursor-pointer border-[var(--color-gp-border)] bg-[var(--color-gp-card)] hover:border-white/20'
+                  }`}
+                >
+                  <div className={`mb-1 text-lg font-bold ${isSelected ? 'text-white' : 'text-[var(--color-gp-text-muted)]'}`}>
+                    {timeString}
                   </div>
-                  <div className="text-[var(--color-gp-cyan)]">${slotTotal.toFixed(2)}</div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                  <div className="flex flex-col gap-1 text-sm font-medium">
+                    {isExpired ? (
+                      <div className="text-[var(--color-gp-text-dim)]">Expired</div>
+                    ) : isFull ? (
+                      <div className="text-red-400">Full</div>
+                    ) : (
+                      <div className={`flex items-center gap-1.5 ${loadTextColor}`}>
+                        <span className={`h-2 w-2 rounded-full ${loadColor}`} /> {loadPct}% booked
+                      </div>
+                    )}
+                    <div className="text-[var(--color-gp-cyan)]">
+                      {slotTotal !== null ? formatCurrency(slotTotal) : 'Pricing unavailable'}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
@@ -157,24 +211,28 @@ export default function SlotPicker({ stationId }: { stationId: string }) {
               </span>
             </div>
             <div className="flex items-center justify-between border-b border-white/5 pb-4">
-              <span className="text-[var(--color-gp-text-dim)]">Rate</span>
-              <span className="font-medium text-white">{selectedSlot ? `$${rate.toFixed(2)}/kWh` : '—'}</span>
+              <span className="text-[var(--color-gp-text-dim)]">Est. rate</span>
+              <span className="font-medium text-white">{selectedSlot && rate ? `${formatCurrency(rate)}/kWh` : '—'}</span>
             </div>
             <div className="flex items-center justify-between border-b border-white/5 pb-4">
               <span className="text-[var(--color-gp-text-dim)]">Est. energy</span>
               <span className="font-medium text-white">{estEnergy} kWh</span>
             </div>
             <div className="flex items-center justify-between pt-2">
-              <span className="text-[var(--color-gp-text-dim)]">Total</span>
-              <span className="text-2xl font-bold text-[var(--color-gp-cyan)]">${selectedSlot ? totalPrice.toFixed(2) : '0.00'}</span>
+              <span className="text-[var(--color-gp-text-dim)]">Estimated total</span>
+              <span className="text-2xl font-bold text-[var(--color-gp-cyan)]">{selectedSlot ? formatCurrency(totalPrice) : formatCurrency(0)}</span>
             </div>
+            <p className="text-xs text-[var(--color-gp-text-dim)]">
+              This is an estimate. The server recalculates the final price at booking time.
+            </p>
           </div>
 
           <div className="mt-8">
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-gp-text-dim)]">
-              Requested load
+            <label htmlFor="requested-kw" className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-gp-text-dim)]">
+              Requested load (kW)
             </label>
             <input
+              id="requested-kw"
               type="number"
               value={requestedKw}
               onChange={(event) => setRequestedKw(Number(event.target.value))}
@@ -200,13 +258,39 @@ export default function SlotPicker({ stationId }: { stationId: string }) {
         <div className="space-y-4">
           {bookingError && (
             <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-red-400">
-              <AlertCircle className="w-5 h-5" /> {bookingError}
+              <AlertCircle className="w-5 h-5 shrink-0" /> {bookingError}
             </div>
           )}
 
-          {bookingSuccess && (
-            <div className="flex items-center gap-2 rounded-lg border border-[var(--color-gp-green)]/20 bg-[var(--color-gp-green)]/10 p-3 text-[var(--color-gp-green)]">
-              <CheckCircle2 className="w-5 h-5" /> {bookingSuccess}
+          {confirmedBooking && (
+            <div className="gp-card border-[var(--color-gp-green)]/25 p-5">
+              <div className="flex items-center gap-2 text-[var(--color-gp-green)]">
+                <CheckCircle2 className="w-5 h-5" /> <span className="font-semibold">Booking confirmed</span>
+              </div>
+              <dl className="mt-4 space-y-2 text-sm">
+                <div className="flex justify-between gap-4">
+                  <dt className="text-[var(--color-gp-text-dim)]">Booking ID</dt>
+                  <dd className="truncate font-mono text-xs text-white">{confirmedBooking.id}</dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-[var(--color-gp-text-dim)]">Slot</dt>
+                  <dd className="text-white">
+                    {new Date(confirmedBooking.slotStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-[var(--color-gp-text-dim)]">Requested load</dt>
+                  <dd className="text-white">{confirmedBooking.requestedKw} kW</dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-[var(--color-gp-text-dim)]">Final price</dt>
+                  <dd className="font-semibold text-[var(--color-gp-green)]">{formatCurrency(confirmedBooking.priceCharged)}</dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-[var(--color-gp-text-dim)]">Status</dt>
+                  <dd className="text-white">{confirmedBooking.status}</dd>
+                </div>
+              </dl>
             </div>
           )}
 

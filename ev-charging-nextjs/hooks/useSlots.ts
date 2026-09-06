@@ -35,7 +35,7 @@ const fetcher = async (url: string) => {
   return response.json();
 };
 
-export function useSlots(stationId: string | null) {
+export function useSlots(stationId: string | null, onUpdate?: () => void) {
   const slotsKey = stationId ? `/api/slots?stationId=${stationId}` : null;
   const pricingKey = stationId ? `/api/pricing?stationId=${stationId}` : null;
 
@@ -43,7 +43,7 @@ export function useSlots(stationId: string | null) {
     data: slots,
     error: slotsError,
     mutate,
-  } = useSWR<Slot[]>(slotsKey, fetcher, { refreshInterval: 5000 });
+  } = useSWR<Slot[]>(slotsKey, fetcher, { refreshInterval: 5000, onSuccess: onUpdate });
   const { data: pricing, error: pricingError } = useSWR<{ prices: PricingPoint[] }>(
     pricingKey,
     fetcher,
