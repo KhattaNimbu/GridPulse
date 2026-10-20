@@ -60,11 +60,11 @@ export default function SignUpPage() {
         callbackUrl: '/driver',
       });
 
-      if (signInResult?.error) {
+      if (!signInResult || signInResult.error) {
         // Account created but sign-in failed — redirect to sign-in
         router.push('/sign-in');
       } else {
-        router.push(signInResult?.url ?? '/driver');
+        router.replace('/driver');
         router.refresh();
       }
     } catch {

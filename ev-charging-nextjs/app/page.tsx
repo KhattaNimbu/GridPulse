@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   ArrowRight,
   Bell,
@@ -13,8 +14,14 @@ import {
   Zap,
 } from "lucide-react";
 import SiteFooter from "@/components/SiteFooter";
+import { getAuthSession } from "@/lib/auth";
 
-export default function Home() {
+export default async function Home() {
+  const session = await getAuthSession();
+  if (session?.user?.id) {
+    redirect(session.user.role === 'OPERATOR' ? '/operator' : '/driver');
+  }
+
   const platformFeatures: Array<{ eyebrow: string; title: string; desc: string; icon: React.ReactNode }> = [
     {
       eyebrow: 'Forecasting',

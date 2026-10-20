@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { getSession, signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
@@ -9,7 +9,7 @@ import { ArrowRight } from 'lucide-react';
 export default function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') ?? '/';
+  const callbackUrl = searchParams.get('callbackUrl');
 
   const demoDriverEmail = process.env.NEXT_PUBLIC_DEMO_DRIVER_EMAIL?.trim();
   const demoDriverPassword = process.env.NEXT_PUBLIC_DEMO_DRIVER_PASSWORD?.trim();
@@ -39,22 +39,41 @@ export default function SignInForm() {
     setError('');
     setLoading(true);
 
-    const result = await signIn('credentials', {
-      email,
-      password,
-      redirect: false,
-      callbackUrl,
-    });
+    try {
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+        callbackUrl: callbackUrl ?? undefined,
+      });
 
-    setLoading(false);
+      if (!result || result.error) {
+        setError('Invalid email or password');
+        return;
+      }
 
-    if (!result || result.error) {
-      setError('Invalid email or password');
-      return;
+      const session = await getSession();
+      if (!session?.user) {
+        setError('Signed in, but we could not load your account. Please try again.');
+        return;
+      }
+
+      const dashboardPath = session.user.role === 'OPERATOR' ? '/operator' : '/driver';
+      const requestedUrl = callbackUrl ? new URL(callbackUrl, window.location.origin) : null;
+      const canResumeRequestedUrl =
+        requestedUrl?.origin === window.location.origin &&
+        (requestedUrl.pathname === dashboardPath || requestedUrl.pathname.startsWith(`${dashboardPath}/`));
+      const destination = canResumeRequestedUrl
+        ? `${requestedUrl.pathname}${requestedUrl.search}${requestedUrl.hash}`
+        : dashboardPath;
+
+      router.replace(destination);
+      router.refresh();
+    } catch {
+      setError('Something went wrong while signing in. Please try again.');
+    } finally {
+      setLoading(false);
     }
-
-    router.push(result.url ?? callbackUrl);
-    router.refresh();
   }
 
   // Square segmented control — active segment is a Mint wash, never a fill.
