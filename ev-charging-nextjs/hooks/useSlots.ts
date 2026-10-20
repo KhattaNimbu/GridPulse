@@ -47,7 +47,7 @@ export function useSlots(stationId: string | null, onUpdate?: () => void) {
   const { data: pricing, error: pricingError } = useSWR<{ prices: PricingPoint[] }>(
     pricingKey,
     fetcher,
-    { refreshInterval: 5000 }
+    { refreshInterval: 60_000 }
   );
 
   const pricingMap = new Map(
@@ -73,4 +73,3 @@ export function useSlots(stationId: string | null, onUpdate?: () => void) {
     mutate,
   };
 }
-

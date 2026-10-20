@@ -44,6 +44,7 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           role: user.role,
         };
+
       },
     }),
   ],
