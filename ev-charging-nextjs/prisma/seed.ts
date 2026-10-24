@@ -6,6 +6,10 @@ import { validatePassword } from '../lib/password'
 const prisma = new PrismaClient()
 
 async function main() {
+  if (process.env.NODE_ENV === 'production' || process.env.VERCEL === '1') {
+    throw new Error('Demo users and stations cannot be seeded in production or on Vercel.')
+  }
+
   const requiredEnv = [
     'DEMO_DRIVER_EMAIL',
     'DEMO_DRIVER_PASSWORD',

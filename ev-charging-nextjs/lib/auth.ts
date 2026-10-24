@@ -8,6 +8,48 @@ import GithubProvider from 'next-auth/providers/github';
 import GoogleProvider from 'next-auth/providers/google';
 import { auditLog } from './logger';
 
+async function getVerifiedGitHubEmail(accessToken: string | undefined) {
+  if (!accessToken) {
+    return null;
+  }
+
+  const response = await fetch('https://api.github.com/user/emails', {
+    headers: {
+      Accept: 'application/vnd.github+json',
+      Authorization: `Bearer ${accessToken}`,
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    console.error(`GitHub email verification failed with status ${response.status}`);
+    return null;
+  }
+
+  const emails: unknown = await response.json();
+  if (!Array.isArray(emails)) {
+    return null;
+  }
+
+  const primaryEmail = emails.find((entry): entry is { email: string } => {
+    if (typeof entry !== 'object' || entry === null) {
+      return false;
+    }
+
+    return (
+      'email' in entry &&
+      typeof entry.email === 'string' &&
+      'primary' in entry &&
+      entry.primary === true &&
+      'verified' in entry &&
+      entry.verified === true
+    );
+  });
+
+  return primaryEmail?.email.toLowerCase().trim() || null;
+}
+
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
@@ -51,12 +93,11 @@ export const authOptions: NextAuthOptions = {
     GithubProvider({
       clientId: process.env.GITHUB_ID ?? process.env.GITHUB_CLIENT_ID ?? '',
       clientSecret: process.env.GITHUB_SECRET ?? process.env.GITHUB_CLIENT_SECRET ?? '',
-      allowDangerousEmailAccountLinking: true,
       profile(profile) {
         return {
           id: profile.id.toString(),
           name: profile.name ?? profile.login,
-          email: profile.email ?? `${profile.login}@users.noreply.github.com`,
+          email: profile.email,
           image: profile.avatar_url,
           role: 'DRIVER' as Role,
         };
@@ -65,7 +106,6 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID ?? process.env.GOOGLE_ID ?? '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? process.env.GOOGLE_SECRET ?? '',
-      allowDangerousEmailAccountLinking: true,
       profile(profile) {
         return {
           id: profile.sub,
@@ -81,26 +121,22 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, account }) {
       if (user) {
         if (account?.provider === 'github' || account?.provider === 'google') {
-          const email = user.email?.toLowerCase().trim();
-          if (email) {
-            let dbUser = await prisma.user.findUnique({
-              where: { email },
-            });
+          const oauthAccount = await prisma.oAuthAccount.findUnique({
+            where: {
+              provider_providerAccountId: {
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+              },
+            },
+            include: { user: true },
+          });
 
-            if (!dbUser) {
-              dbUser = await prisma.user.create({
-                data: {
-                  email,
-                  name: user.name || (account.provider === 'github' ? 'GitHub User' : 'Google User'),
-                  role: 'DRIVER',
-                  passwordHash: '',
-                },
-              });
-            }
-
-            token.role = dbUser.role;
-            token.userId = dbUser.id;
+          if (!oauthAccount) {
+            throw new Error('OAuth account was not linked during sign-in');
           }
+
+          token.role = oauthAccount.user.role;
+          token.userId = oauthAccount.user.id;
         } else {
           token.role = user.role;
           token.userId = user.id;
@@ -108,19 +144,80 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     },
-    async signIn({ user, account }) {
-      try {
-        if (account?.provider === 'github' || account?.provider === 'google') {
-          const email = user.email?.toLowerCase().trim();
-          if (!email) {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === 'github' || account?.provider === 'google') {
+        let email: string | null = null;
+        if (account.provider === 'google') {
+          if (
+            profile &&
+            'email_verified' in profile &&
+            profile.email_verified === true &&
+            user.email
+          ) {
+            email = user.email.toLowerCase().trim();
+          }
+        } else {
+          email = await getVerifiedGitHubEmail(account.access_token);
+        }
+
+        if (!email) {
+          return false;
+        }
+
+        const existingAccount = await prisma.oAuthAccount.findUnique({
+          where: {
+            provider_providerAccountId: {
+              provider: account.provider,
+              providerAccountId: account.providerAccountId,
+            },
+          },
+          include: { user: true },
+        });
+
+        let dbUser = existingAccount?.user;
+        if (!dbUser) {
+          const existingUser = await prisma.user.findUnique({ where: { email } });
+          if (existingUser?.passwordHash) {
             return false;
           }
-          const dbUser = await prisma.user.findUnique({ where: { email } });
-          await auditLog('sign_in', { userId: dbUser?.id ?? user?.id, email: user?.email, provider: account.provider });
-          return true;
+
+          dbUser = await prisma.$transaction(async (transaction) => {
+            const linkedUser =
+              existingUser ??
+              (await transaction.user.create({
+                data: {
+                  email,
+                  name: user.name || (account.provider === 'github' ? 'GitHub User' : 'Google User'),
+                  role: 'DRIVER',
+                  passwordHash: '',
+                },
+              }));
+
+            await transaction.oAuthAccount.create({
+              data: {
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+                userId: linkedUser.id,
+              },
+            });
+
+            return linkedUser;
+          });
         }
+
+        try {
+          await auditLog('sign_in', { userId: dbUser.id, email, provider: account.provider });
+        } catch (error) {
+          console.error('Failed to audit OAuth sign-in', error);
+        }
+        return true;
+      }
+
+      try {
         await auditLog('sign_in', { userId: user?.id, email: user?.email, provider: 'credentials' });
-      } catch {}
+      } catch (error) {
+        console.error('Failed to audit credential sign-in', error);
+      }
       return true;
     },
     async session({ session, token }) {

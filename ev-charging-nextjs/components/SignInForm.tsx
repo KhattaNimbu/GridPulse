@@ -6,20 +6,28 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 
+function getSafeCallbackUrl(callbackUrl: string | null, fallbackUrl: string) {
+  if (!callbackUrl?.startsWith('/') || callbackUrl.startsWith('//')) {
+    return fallbackUrl;
+  }
+
+  const requestedUrl = new URL(callbackUrl, window.location.origin);
+  if (requestedUrl.origin !== window.location.origin) {
+    return fallbackUrl;
+  }
+
+  return `${requestedUrl.pathname}${requestedUrl.search}${requestedUrl.hash}`;
+}
+
 export default function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl');
   const oauthError = searchParams.get('error');
 
-  const demoDriverEmail = process.env.NEXT_PUBLIC_DEMO_DRIVER_EMAIL?.trim();
-  const demoDriverPassword = process.env.NEXT_PUBLIC_DEMO_DRIVER_PASSWORD?.trim();
-  const demoOperatorEmail = process.env.NEXT_PUBLIC_DEMO_OPERATOR_EMAIL?.trim();
-  const demoOperatorPassword = process.env.NEXT_PUBLIC_DEMO_OPERATOR_PASSWORD?.trim();
-
   const [mode, setMode] = useState<'DRIVER' | 'OPERATOR'>('DRIVER');
-  const [email, setEmail] = useState(demoDriverEmail ?? '');
-  const [password, setPassword] = useState(demoDriverPassword ?? '');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState(
     oauthError === 'OAuthSignin'
@@ -39,7 +47,8 @@ export default function SignInForm() {
     setError('');
     setOauthLoading(provider);
     try {
-      const destination = callbackUrl || (mode === 'OPERATOR' ? '/operator' : '/driver');
+      const fallbackUrl = mode === 'OPERATOR' ? '/operator' : '/driver';
+      const destination = getSafeCallbackUrl(callbackUrl, fallbackUrl);
       await signIn(provider, { callbackUrl: destination });
     } catch {
       setError(`Failed to sign in with ${provider === 'google' ? 'Google' : 'GitHub'}.`);
@@ -49,13 +58,6 @@ export default function SignInForm() {
 
   function switchMode(nextMode: 'DRIVER' | 'OPERATOR') {
     setMode(nextMode);
-    if (nextMode === 'DRIVER') {
-      setEmail(demoDriverEmail ?? '');
-      setPassword(demoDriverPassword ?? '');
-      return;
-    }
-    setEmail(demoOperatorEmail ?? '');
-    setPassword(demoOperatorPassword ?? '');
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -68,7 +70,7 @@ export default function SignInForm() {
         email,
         password,
         redirect: false,
-        callbackUrl: callbackUrl ?? undefined,
+        callbackUrl: getSafeCallbackUrl(callbackUrl, '/driver'),
       });
 
       if (!result || result.error) {
@@ -83,10 +85,10 @@ export default function SignInForm() {
       }
 
       const dashboardPath = session.user.role === 'OPERATOR' ? '/operator' : '/driver';
-      const requestedUrl = callbackUrl ? new URL(callbackUrl, window.location.origin) : null;
+      const requestedUrl = new URL(getSafeCallbackUrl(callbackUrl, dashboardPath), window.location.origin);
       const canResumeRequestedUrl =
-        requestedUrl?.origin === window.location.origin &&
-        (requestedUrl.pathname === dashboardPath || requestedUrl.pathname.startsWith(`${dashboardPath}/`));
+        requestedUrl.pathname === dashboardPath ||
+        requestedUrl.pathname.startsWith(`${dashboardPath}/`);
       const destination = canResumeRequestedUrl
         ? `${requestedUrl.pathname}${requestedUrl.search}${requestedUrl.hash}`
         : dashboardPath;
@@ -252,21 +254,6 @@ export default function SignInForm() {
           </Link>
         </p>
 
-        {(demoOperatorEmail || demoDriverEmail) && (
-          <div className="gp-notice mt-6">
-            <div className="gp-eyebrow mb-2">Demo credentials</div>
-            {demoOperatorEmail && demoOperatorPassword && (
-              <div>
-                <span className="font-medium">Operator:</span> {demoOperatorEmail} / {demoOperatorPassword}
-              </div>
-            )}
-            {demoDriverEmail && demoDriverPassword && (
-              <div className={demoOperatorEmail ? 'mt-1' : ''}>
-                <span className="font-medium">Driver:</span> {demoDriverEmail} / {demoDriverPassword}
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );
