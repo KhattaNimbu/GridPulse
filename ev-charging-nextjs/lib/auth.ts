@@ -50,46 +50,43 @@ async function getVerifiedGitHubEmail(accessToken: string | undefined) {
   return primaryEmail?.email.toLowerCase().trim() || null;
 }
 
-export const authOptions: NextAuthOptions = {
-  session: {
-    strategy: 'jwt',
-  },
-  pages: {
-    signIn: '/sign-in',
-  },
-  providers: [
-    CredentialsProvider({
-      name: 'Credentials',
-      credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials.password) {
-          return null;
-        }
+const providers: NonNullable<NextAuthOptions['providers']> = [
+  CredentialsProvider({
+    name: 'Credentials',
+    credentials: {
+      email: { label: 'Email', type: 'email' },
+      password: { label: 'Password', type: 'password' },
+    },
+    async authorize(credentials) {
+      if (!credentials?.email || !credentials.password) {
+        return null;
+      }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        });
+      const user = await prisma.user.findUnique({
+        where: { email: credentials.email },
+      });
 
-        if (!user) {
-          return null;
-        }
+      if (!user) {
+        return null;
+      }
 
-        const isValid = await compare(credentials.password, user.passwordHash);
-        if (!isValid) {
-          return null;
-        }
+      const isValid = await compare(credentials.password, user.passwordHash);
+      if (!isValid) {
+        return null;
+      }
 
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        };
-      },
-    }),
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      };
+    },
+  }),
+];
+
+if (process.env.GITHUB_ID || process.env.GITHUB_CLIENT_ID) {
+  providers.push(
     GithubProvider({
       clientId: process.env.GITHUB_ID ?? process.env.GITHUB_CLIENT_ID ?? '',
       clientSecret: process.env.GITHUB_SECRET ?? process.env.GITHUB_CLIENT_SECRET ?? '',
@@ -103,6 +100,11 @@ export const authOptions: NextAuthOptions = {
         };
       },
     }),
+  );
+}
+
+if (process.env.GOOGLE_CLIENT_ID || process.env.GOOGLE_ID) {
+  providers.push(
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID ?? process.env.GOOGLE_ID ?? '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? process.env.GOOGLE_SECRET ?? '',
@@ -116,7 +118,17 @@ export const authOptions: NextAuthOptions = {
         };
       },
     }),
-  ],
+  );
+}
+
+export const authOptions: NextAuthOptions = {
+  session: {
+    strategy: 'jwt',
+  },
+  pages: {
+    signIn: '/sign-in',
+  },
+  providers,
   callbacks: {
     async jwt({ token, user, account }) {
       if (user) {
